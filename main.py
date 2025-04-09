@@ -3,6 +3,10 @@ from typing import Dict, Tuple, List, Union, Any
 import pygame
 
 pygame.init()
+pygame.mixer.init()
+
+pygame.mixer.music.load(r"./assets/music/ManifiestoUrbano.org.mp3")
+pygame.mixer.music.play(loops=-1, start=0.0)
 
 WIDTH: int
 HEIGHT: int
@@ -111,12 +115,12 @@ while True:
     # Posicionamos el sprite del suelo en la coordenada Y = 670.
     # Comenzamos en X = 1170 y restamos 180 en cada iteración para moverlo hacia la izquierda.
     n: int = 1170
-    for i in range( 0, 8, 1 ):
-        screen.blit(
-            source = sprites[ "suelo_superior" ],
-            dest = ( n, 670 )
-        )
-        n -= 180
+    # for i in range( 0, 8, 1 ):
+    #     screen.blit(
+    #         source = sprites[ "suelo_superior" ],
+    #         dest = ( n, 670 )
+    #     )
+    #     n -= 180
 
 
     # screen.blit(
