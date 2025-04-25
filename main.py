@@ -13,7 +13,10 @@ class Personaje:
         self.ataque: int = ataque
         # La posición inicial del personaje el primer index es la posición x y el segundo índice es la posición y
         self.defensa: int = defensa
-        self.posicion: Tuple[int, int] = ((WIDTH // 2) - 600, HEIGHT - 370)
+        self.__x: int = (WIDTH // 2) - 600
+        self.__y: int = HEIGHT - 510
+        self.__position_initial: Tuple[int, int] = (self.__x, self.__y)
+        self.posicion: Tuple[int, int] = (self.__x, self.__y)
         self.ataque_contador: int = 0  # Contador de ataques
         self.velocidad: int = 10  # Velocidad de movimiento
 
@@ -44,15 +47,149 @@ class Personaje:
         # }
 
         self.movimientos: Dict[str, pygame.Surface] = {
-            "posicion_normal": pygame.image.load(fr"./personajes/{self.nombre}/posicion_normal.png").convert_alpha(),
-            "ataque_inicial": pygame.image.load(fr"./personajes/{self.nombre}/ataque_inicial.png").convert_alpha(),
-            "ataque_final": pygame.image.load(fr"./personajes/{self.nombre}/ataque_final.png").convert_alpha()
+            "posicion_normal": pygame.transform.scale(
+                pygame.image.load(
+                    rf"./personajes/{self.nombre}/posicion_normal.png"
+                ).convert_alpha(),
+                (
+                    int(
+                        pygame.image.load(
+                            rf"./personajes/{self.nombre}/posicion_normal.png"
+                        )
+                        .convert_alpha()
+                        .get_width()
+                        * 1.5
+                    ),
+                    int(
+                        pygame.image.load(
+                            rf"./personajes/{self.nombre}/posicion_normal.png"
+                        )
+                        .convert_alpha()
+                        .get_height()
+                        * 1.5
+                    ),
+                ),
+            ),
+            "ataque_inicial": pygame.transform.scale(
+                pygame.image.load(
+                    rf"./personajes/{self.nombre}/ataque_inicial.png"
+                ).convert_alpha(),
+                (
+                    int(
+                        pygame.image.load(
+                            rf"./personajes/{self.nombre}/ataque_inicial.png"
+                        )
+                        .convert_alpha()
+                        .get_width()
+                        * 1.5
+                    ),
+                    int(
+                        pygame.image.load(
+                            rf"./personajes/{self.nombre}/ataque_inicial.png"
+                        )
+                        .convert_alpha()
+                        .get_height()
+                        * 1.5
+                    ),
+                ),
+            ),
+            "ataque_final": pygame.transform.scale(
+                pygame.image.load(
+                    rf"./personajes/{self.nombre}/ataque_final.png"
+                ).convert_alpha(),
+                (
+                    int(
+                        pygame.image.load(
+                            rf"./personajes/{self.nombre}/ataque_final.png"
+                        )
+                        .convert_alpha()
+                        .get_width()
+                        * 1.5
+                    ),
+                    int(
+                        pygame.image.load(
+                            rf"./personajes/{self.nombre}/ataque_final.png"
+                        )
+                        .convert_alpha()
+                        .get_height()
+                        * 1.5
+                    ),
+                ),
+            ),
+            "agachado": pygame.image.load(
+                rf"./personajes/{self.nombre}/agachado.png"
+            ).convert_alpha(),
+            "defendiendose": pygame.transform.scale(
+                pygame.image.load(
+                    rf"./personajes/{self.nombre}/defendiendose.png"
+                ).convert_alpha(),
+                (
+                    int(
+                        pygame.image.load(
+                            rf"./personajes/{self.nombre}/defendiendose.png"
+                        )
+                        .convert_alpha()
+                        .get_width()
+                        * 0.2
+                    ),
+                    int(
+                        pygame.image.load(
+                            rf"./personajes/{self.nombre}/defendiendose.png"
+                        )
+                        .convert_alpha()
+                        .get_height()
+                        * 0.2
+                    ),
+                ),
+            ),
+            #     "patada": pygame.image.load(
+            #         rf"./personajes/{self.nombre}/patada.png"
+            #     ).convert_alpha(),
+            #     "defendiendose": pygame.image.load(
+            #         rf"./personajes/{self.nombre}/defendiendose.png"
+            #     ).convert_alpha(),
         }
 
+    @property
+    def position_initial(self: "Personaje") -> Tuple[int, int]:
+        return self.__position_initial
+
+    @position_initial.setter
+    def position_initial(self: "Personaje", value: Tuple[int, int]) -> None:
+        self.__position_initial = value
+        self.posicion = (self.__x, self.__y)
+
+    @property
+    def y(self: "Personaje") -> int:
+        return self.__y
+
+    @y.setter
+    def y(self: "Personaje", value: int) -> None:
+        self.__y = value
+        self.posicion = (self.__x, self.__y)
+
+    # @y.deleter
+    # def y(self: "Personaje") -> None:
+    #     del self.__y
+    #     self.posicion = (self.__x, self.__y)
+
+    @property
+    def x(self: "Personaje") -> int:
+        return self.__x
+
+    @x.setter
+    def x(self: "Personaje", value: int) -> None:
+        self.__x = value
+        self.posicion = (self.__x, self.__y)
 
 
 pygame.init()
 pygame.mixer.init()
+
+
+sprite_sheet_defendiendose: pygame.Surface = pygame.image.load(
+    r"./personajes/Daniel/defendiendose.png"
+)
 
 # Music
 # pygame.mixer.music.load(r"./assets/music/ManifiestoUrbano.org.mp3")
@@ -140,7 +277,7 @@ def extraer_sprites_varios_tamanos(
     return sprites
 
 
-daniel: Personaje = Personaje(
+personaje_one: Personaje = Personaje(
     nombre="Daniel",
     vida=100,
     ataque=10,
@@ -148,60 +285,81 @@ daniel: Personaje = Personaje(
 )
 
 
+# Agregar una variable de estado para controlar la animación
+estado_personaje = "normal"  # Puede ser "normal", "agachado", etc.
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
 
-    for sprite in sprites_shop:
-        for i in background_surfaces:
-            screen.blit(source=i, dest=(0, 0))  # Dibujar los fondos
-        n = 0
-        while n < WIDTH:
-            screen.blit(suelo_sprite, (n, HEIGHT - 110))  # Dibujar el suelo
-            n += 100
-        screen.blit(
-            sprite, (WIDTH // 2 - (-440), HEIGHT - 610)
-        )  # Dibujar la tienda animada
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                estado_personaje = "agachado"
+                personaje_one.y += 140
 
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
-                daniel.ataque_contador += 1
-
-                match daniel.ataque_contador:
+            if event.key == pygame.K_c:
+                personaje_one.ataque_contador += 1
+                match personaje_one.ataque_contador:
                     case 1:
-                        screen.blit(
-                            source=daniel.movimientos.get(
-                                "ataque_inicial",
-                            ),  # type: ignore
-                            dest=daniel.posicion,
-                        )
-                        pygame.display.update()
-                        break
-
-
+                        estado_personaje = "ataque_inicial"
                     case 2:
-                        screen.blit(
-                            source=daniel.movimientos.get(
-                                "ataque_final",
-                            ),  # type: ignore
-                            dest=daniel.posicion,
-                        )
-                        # Reiniciar el contador después del ataque final
-                        daniel.ataque_contador = 0
-                        pygame.display.update()
-                        break
+                        estado_personaje = "ataque_final"
+                        personaje_one.ataque_contador = 0
 
-        else:
+            if event.key == pygame.K_w:
+                personaje_one.y += 120
+                estado_personaje = "defendiendose"
+
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_DOWN:
+                estado_personaje = "normal"
+
+    # Dibujar los fondos y otros elementos
+    for i in background_surfaces:
+        screen.blit(source=i, dest=(0, 0))  # Dibujar los fondos
+    n = 0
+    while n < WIDTH:
+        screen.blit(suelo_sprite, (n, HEIGHT - 110))  # Dibujar el suelo
+        n += 100
+
+    match estado_personaje:
+        case "agachado":
             screen.blit(
-                source=daniel.movimientos.get(
-                    "posicion_normal",  # Cambiar a "posicion_normal" para la posición estándar
-                ),  # type: ignore
-                dest=daniel.posicion,
+                source=personaje_one.movimientos.get("agachado"),  # type: ignore
+                dest=personaje_one.posicion,
+            )
+            if not personaje_one.position_initial[1] < personaje_one.y:
+                personaje_one.y += 140
+
+        case "ataque_inicial":
+            screen.blit(
+                source=personaje_one.movimientos.get("ataque_inicial"),  # type: ignore
+                dest=personaje_one.posicion,
             )
 
-        pygame.display.update()
-        pygame.time.delay(100)  # Controla la velocidad de la animación
+        case "ataque_final":
+            screen.blit(
+                source=personaje_one.movimientos.get("ataque_final"),  # type: ignore
+                dest=personaje_one.posicion,
+            )
 
+        case "defendiendose":
+            screen.blit(
+                source=personaje_one.movimientos.get("defendiendose"),  # type: ignore
+                dest=personaje_one.posicion,
+            )
+            if personaje_one.position_initial[1] < personaje_one.y:
+                personaje_one.y -= 140
+
+        case "normal":
+            if personaje_one.position_initial[1] < personaje_one.y:
+                personaje_one.y -= 140
+            screen.blit(
+                source=personaje_one.movimientos.get("posicion_normal"),  # type: ignore
+                dest=personaje_one.posicion,
+            )
+
+    pygame.display.update()
     clock.tick(60)
