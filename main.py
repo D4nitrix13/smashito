@@ -19,6 +19,11 @@ class Personaje:
         self.posicion: Tuple[int, int] = (self.__x, self.__y)
         self.ataque_contador: int = 0  # Contador de ataques
         self.velocidad: int = 10  # Velocidad de movimiento
+        self.posicion_cuando_esta_agachado: Tuple[int, int] = (self.__x, self.__y + 140)
+        self.posicion_cuando_esta_defendiendose: Tuple[int, int] = (
+            self.__x,
+            self.__y + 120,
+        )
 
         # sprite_sheet_yo: pygame.Surface = pygame.image.load(
         #     "./spritesheet.png"
@@ -286,7 +291,7 @@ personaje_one: Personaje = Personaje(
 
 
 # Agregar una variable de estado para controlar la animación
-estado_personaje = "normal"  # Puede ser "normal", "agachado", etc.
+estado_personaje: str = "normal"  # Puede ser "normal", "agachado", etc.
 
 while True:
     for event in pygame.event.get():
@@ -297,7 +302,6 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_DOWN:
                 estado_personaje = "agachado"
-                personaje_one.y += 140
 
             if event.key == pygame.K_c:
                 personaje_one.ataque_contador += 1
@@ -309,7 +313,6 @@ while True:
                         personaje_one.ataque_contador = 0
 
             if event.key == pygame.K_w:
-                personaje_one.y += 120
                 estado_personaje = "defendiendose"
 
         if event.type == pygame.KEYUP:
@@ -328,10 +331,8 @@ while True:
         case "agachado":
             screen.blit(
                 source=personaje_one.movimientos.get("agachado"),  # type: ignore
-                dest=personaje_one.posicion,
+                dest=personaje_one.posicion_cuando_esta_agachado,
             )
-            if not personaje_one.position_initial[1] < personaje_one.y:
-                personaje_one.y += 140
 
         case "ataque_inicial":
             screen.blit(
@@ -348,14 +349,10 @@ while True:
         case "defendiendose":
             screen.blit(
                 source=personaje_one.movimientos.get("defendiendose"),  # type: ignore
-                dest=personaje_one.posicion,
+                dest=personaje_one.posicion_cuando_esta_defendiendose,
             )
-            if personaje_one.position_initial[1] < personaje_one.y:
-                personaje_one.y -= 140
 
         case "normal":
-            if personaje_one.position_initial[1] < personaje_one.y:
-                personaje_one.y -= 140
             screen.blit(
                 source=personaje_one.movimientos.get("posicion_normal"),  # type: ignore
                 dest=personaje_one.posicion,
