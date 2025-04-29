@@ -18,11 +18,18 @@ class Personaje:
         self.__position_initial: Tuple[int, int] = (self.__x, self.__y)
         self.posicion: Tuple[int, int] = (self.__x, self.__y)
         self.ataque_contador: int = 0  # Contador de ataques
+        self.pie_actual: int = (
+            0  # Pie actual (0 para pie izquierdo, 1 para pie derecho)
+        )
         self.velocidad: int = 10  # Velocidad de movimiento
         self.posicion_cuando_esta_agachado: Tuple[int, int] = (self.__x, self.__y + 140)
         self.posicion_cuando_esta_defendiendose: Tuple[int, int] = (
             self.__x,
             self.__y + 120,
+        )
+        self.posicion_cuando_esta_caminando_pie_derecho: Tuple[int, int] = (
+            self.__x,
+            self.__y + 95,
         )
 
         # sprite_sheet_yo: pygame.Surface = pygame.image.load(
@@ -147,22 +154,16 @@ class Personaje:
                     ),
                 ),
             ),
-            #     "patada": pygame.image.load(
-            #         rf"./personajes/{self.nombre}/patada.png"
-            #     ).convert_alpha(),
-            #     "defendiendose": pygame.image.load(
-            #         rf"./personajes/{self.nombre}/defendiendose.png"
-            #     ).convert_alpha(),
         }
 
-    @property
-    def position_initial(self: "Personaje") -> Tuple[int, int]:
-        return self.__position_initial
+    # @property
+    # def position_initial(self: "Personaje") -> Tuple[int, int]:
+    #     return self.__position_initial
 
-    @position_initial.setter
-    def position_initial(self: "Personaje", value: Tuple[int, int]) -> None:
-        self.__position_initial = value
-        self.posicion = (self.__x, self.__y)
+    # @position_initial.setter
+    # def position_initial(self: "Personaje", value: Tuple[int, int]) -> None:
+    #     self.__position_initial = value
+    #     self.posicion = (self.__x, self.__y)
 
     @property
     def y(self: "Personaje") -> int:
@@ -172,6 +173,9 @@ class Personaje:
     def y(self: "Personaje", value: int) -> None:
         self.__y = value
         self.posicion = (self.__x, self.__y)
+        self.posicion_cuando_esta_agachado = (self.__x, self.__y + 140)
+        self.posicion_cuando_esta_defendiendose = (self.__x, self.__y + 120)
+        self.posicion_cuando_esta_caminando_pie_derecho = (self.__x, self.__y + 95)
 
     # @y.deleter
     # def y(self: "Personaje") -> None:
@@ -186,15 +190,13 @@ class Personaje:
     def x(self: "Personaje", value: int) -> None:
         self.__x = value
         self.posicion = (self.__x, self.__y)
+        self.posicion_cuando_esta_agachado = (self.__x, self.__y + 140)
+        self.posicion_cuando_esta_defendiendose = (self.__x, self.__y + 120)
+        self.posicion_cuando_esta_caminando_pie_derecho = (self.__x, self.__y + 95)
 
 
 pygame.init()
 pygame.mixer.init()
-
-
-sprite_sheet_defendiendose: pygame.Surface = pygame.image.load(
-    r"./personajes/Daniel/defendiendose.png"
-)
 
 # Music
 # pygame.mixer.music.load(r"./assets/music/ManifiestoUrbano.org.mp3")
@@ -315,8 +317,39 @@ while True:
             if event.key == pygame.K_w:
                 estado_personaje = "defendiendose"
 
+            if event.key == pygame.K_LEFT:
+                personaje_one.pie_actual += 1
+                match personaje_one.pie_actual:
+                    case 1:
+                        estado_personaje = "caminando_pie_derecho"
+                    case 2:
+                        estado_personaje = "caminando_pie_izquierdo"
+                        personaje_one.pie_actual = 0
+                personaje_one.x -= personaje_one.velocidad
+
+            if event.key == pygame.K_RIGHT:
+                personaje_one.pie_actual += 1
+                match personaje_one.pie_actual:
+                    case 1:
+                        estado_personaje = "caminando_pie_izquierdo"
+                    case 2:
+                        estado_personaje = "caminando_pie_derecho"
+                        personaje_one.pie_actual = 0
+                personaje_one.x += personaje_one.velocidad
+
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_DOWN:
+                estado_personaje = "normal"
+            if event.key == pygame.K_w:  # Manejar cuando se suelta la tecla W
+                estado_personaje = "normal"
+
+            if event.key == pygame.K_RIGHT:
+                estado_personaje = "normal"
+
+            if event.key == pygame.K_LEFT:
+                estado_personaje = "normal"
+
+            if event.key == pygame.K_c:
                 estado_personaje = "normal"
 
     # Dibujar los fondos y otros elementos
@@ -351,6 +384,18 @@ while True:
                 source=personaje_one.movimientos.get("defendiendose"),  # type: ignore
                 dest=personaje_one.posicion_cuando_esta_defendiendose,
             )
+
+        # case "caminando_pie_derecho":
+        #     screen.blit(
+        #         source=personaje_one.movimientos.get("caminando_pie_derecho"),  # type: ignore
+        #         dest=personaje_one.posicion_cuando_esta_caminando_pie_derecho,
+        #     )
+
+        # case "caminando_pie_izquierdo":
+        #     screen.blit(
+        #         source=personaje_one.movimientos.get("caminando_pie_izquierdo"),  # type: ignore
+        #         dest=personaje_one.posicion,
+        #     )
 
         case "normal":
             screen.blit(
