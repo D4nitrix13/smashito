@@ -32,128 +32,31 @@ class Personaje:
             self.__y + 95,
         )
 
-        # sprite_sheet_yo: pygame.Surface = pygame.image.load(
-        #     "./spritesheet.png"
-        # ).convert_alpha()
+        # Carga la imagen original (spritesheet)
+        imagen_original = pygame.image.load(
+            rf"./personajes/{self.nombre}/spritesheet_ataque.png"
+        )
+        ancho_objetivo = 200
+        alto_objetivo = 300
 
-        # # Coordenadas de los sprites (x, y, ancho, alto)
-        # coordenadas_sprites_yo: Dict[str, Tuple[int, int, int, int]] = {
-        #     "posicion_normal": (55, 30, 365, 980),  # posicion normal
-        #     "ataque_inicial": (475, 30, 525, 990),  # ataque inicial
-        #     "ataque_final": (950, 30, 560, 900),  # ataque final
-        # }
+        # Define manualmente las coordenadas y tamaños de cada sprite (x, y, ancho, alto)
+        coordenadas_sprites = [
+            (0, 0, 460, 915),  # Sprite 1: posición normal
+            (95, 0, 100, 200),  # Sprite 2: ataque inicial
+            (200, 0, 110, 200),  # Sprite 3: ataque final
+        ]
 
-        # # Extraer los sprites y mapearlos a un diccionario
-        # sprites_yo: Dict[str, pygame.Surface] = {
-        #     nombre: pygame.transform.scale(
-        #         sprite, (int(sprite.get_width() * 0.3), int(sprite.get_height() * 0.3))
-        #     )
-        #     for nombre, coordenadas in coordenadas_sprites_yo.items()
-        #     for sprite in extraer_sprites_varios_tamanos(sprite_sheet_yo, [coordenadas])
-        # }
-
-        # self.movimientos: Dict[str, pygame.Surface] = {
-        #     "posicion_normal": sprites_yo["posicion_normal"],
-        #     "ataque_inicial": sprites_yo["ataque_inicial"],
-        #     "ataque_final": sprites_yo["ataque_final"],
-        # }
+        sprites = []
+        for x, y, w, h in coordenadas_sprites:
+            rect = pygame.Rect(x, y, w, h)
+            sprite = imagen_original.subsurface(rect).copy()
+            sprite = pygame.transform.scale(sprite, (ancho_objetivo, alto_objetivo))
+            sprites.append(sprite)
 
         self.movimientos: Dict[str, pygame.Surface] = {
-            "posicion_normal": pygame.transform.scale(
-                pygame.image.load(
-                    rf"./personajes/{self.nombre}/posicion_normal.png"
-                ).convert_alpha(),
-                (
-                    int(
-                        pygame.image.load(
-                            rf"./personajes/{self.nombre}/posicion_normal.png"
-                        )
-                        .convert_alpha()
-                        .get_width()
-                        * 1.5
-                    ),
-                    int(
-                        pygame.image.load(
-                            rf"./personajes/{self.nombre}/posicion_normal.png"
-                        )
-                        .convert_alpha()
-                        .get_height()
-                        * 1.5
-                    ),
-                ),
-            ),
-            "ataque_inicial": pygame.transform.scale(
-                pygame.image.load(
-                    rf"./personajes/{self.nombre}/ataque_inicial.png"
-                ).convert_alpha(),
-                (
-                    int(
-                        pygame.image.load(
-                            rf"./personajes/{self.nombre}/ataque_inicial.png"
-                        )
-                        .convert_alpha()
-                        .get_width()
-                        * 1.5
-                    ),
-                    int(
-                        pygame.image.load(
-                            rf"./personajes/{self.nombre}/ataque_inicial.png"
-                        )
-                        .convert_alpha()
-                        .get_height()
-                        * 1.5
-                    ),
-                ),
-            ),
-            "ataque_final": pygame.transform.scale(
-                pygame.image.load(
-                    rf"./personajes/{self.nombre}/ataque_final.png"
-                ).convert_alpha(),
-                (
-                    int(
-                        pygame.image.load(
-                            rf"./personajes/{self.nombre}/ataque_final.png"
-                        )
-                        .convert_alpha()
-                        .get_width()
-                        * 1.5
-                    ),
-                    int(
-                        pygame.image.load(
-                            rf"./personajes/{self.nombre}/ataque_final.png"
-                        )
-                        .convert_alpha()
-                        .get_height()
-                        * 1.5
-                    ),
-                ),
-            ),
-            "agachado": pygame.image.load(
-                rf"./personajes/{self.nombre}/agachado.png"
-            ).convert_alpha(),
-            "defendiendose": pygame.transform.scale(
-                pygame.image.load(
-                    rf"./personajes/{self.nombre}/defendiendose.png"
-                ).convert_alpha(),
-                (
-                    int(
-                        pygame.image.load(
-                            rf"./personajes/{self.nombre}/defendiendose.png"
-                        )
-                        .convert_alpha()
-                        .get_width()
-                        * 0.2
-                    ),
-                    int(
-                        pygame.image.load(
-                            rf"./personajes/{self.nombre}/defendiendose.png"
-                        )
-                        .convert_alpha()
-                        .get_height()
-                        * 0.2
-                    ),
-                ),
-            ),
+            "posicion_normal": sprites[0],
+            "ataque_inicial": sprites[1],
+            "ataque_final": sprites[2],
         }
 
     # @property
@@ -318,23 +221,19 @@ while True:
                 estado_personaje = "defendiendose"
 
             if event.key == pygame.K_LEFT:
-                personaje_one.pie_actual += 1
                 match personaje_one.pie_actual:
                     case 1:
                         estado_personaje = "caminando_pie_derecho"
                     case 2:
                         estado_personaje = "caminando_pie_izquierdo"
-                        personaje_one.pie_actual = 0
                 personaje_one.x -= personaje_one.velocidad
 
             if event.key == pygame.K_RIGHT:
-                personaje_one.pie_actual += 1
                 match personaje_one.pie_actual:
                     case 1:
                         estado_personaje = "caminando_pie_izquierdo"
                     case 2:
                         estado_personaje = "caminando_pie_derecho"
-                        personaje_one.pie_actual = 0
                 personaje_one.x += personaje_one.velocidad
 
         if event.type == pygame.KEYUP:
