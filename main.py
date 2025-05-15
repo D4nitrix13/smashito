@@ -40,10 +40,21 @@ class Personaje:
         alto_objetivo = 300
 
         # Define manualmente las coordenadas y tamaños de cada sprite (x, y, ancho, alto)
+        # El primer sprite define el área principal (posición normal)
         coordenadas_sprites = [
-            (0, 0, 460, 915),  # Sprite 1: posición normal
-            (95, 0, 100, 200),  # Sprite 2: ataque inicial
-            (200, 0, 110, 200),  # Sprite 3: ataque final
+            (0, 0, 460, 915),  # Sprite 1: posición normal (referencia)
+            (
+                460,
+                0,
+                540,
+                915,
+            ),  # Sprite 2: ataque inicial (a la derecha del primero, mismo alto)
+            (
+                690,
+                0,
+                230,
+                915,
+            ),  # Sprite 3: ataque final (a la derecha del segundo, mismo alto)
         ]
 
         sprites = []
@@ -298,7 +309,7 @@ while True:
 
         case "normal":
             screen.blit(
-                source=personaje_one.movimientos.get("posicion_normal"),  # type: ignore
+                source=personaje_one.movimientos.get("ataque_inicial"),  # type: ignore
                 dest=personaje_one.posicion,
             )
 
