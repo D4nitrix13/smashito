@@ -32,37 +32,31 @@ class Personaje:
             self.__y + 95,
         )
 
-        # Carga la imagen original (spritesheet)
+        # Carga la imagen original (spritesheet con 4 sprites en fila)
         imagen_original = pygame.image.load(
-            rf"./personajes/{self.nombre}/spritesheet_ataque.png"
+            rf"./personajes/{self.nombre}/spritesheet_otros_movimientos.png"
         )
-        ancho_objetivo = 200
-        alto_objetivo = 300
+        # Escala uniformemente manteniendo la relación de aspecto
+        ancho_objetivo = 300
+        alto_objetivo = 400
+        rect = imagen_original.get_rect()
+        relacion = min(ancho_objetivo / rect.width, alto_objetivo / rect.height)
+        nuevo_tamano = (int(rect.width * relacion), int(rect.height * relacion))
+        imagen_escalada = pygame.transform.scale(imagen_original, nuevo_tamano)
 
-        # Define manualmente las coordenadas y tamaños de cada sprite (x, y, ancho, alto)
-        # El primer sprite define el área principal (posición normal)
-        coordenadas_sprites = [
-            (0, 0, 460, 915),  # Sprite 1: posición normal (referencia)
-            (
-                460,
-                0,
-                540,
-                915,
-            ),  # Sprite 2: ataque inicial (a la derecha del primero, mismo alto)
-            (
-                690,
-                0,
-                230,
-                915,
-            ),  # Sprite 3: ataque final (a la derecha del segundo, mismo alto)
-        ]
+        # Suponiendo que hay 4 sprites en una fila, todos del mismo ancho
+        ancho_sprite = imagen_escalada.get_width() // 3
+        alto_sprite = imagen_escalada.get_height()
 
         sprites = []
-        for x, y, w, h in coordenadas_sprites:
-            rect = pygame.Rect(x, y, w, h)
-            sprite = imagen_original.subsurface(rect).copy()
-            sprite = pygame.transform.scale(sprite, (ancho_objetivo, alto_objetivo))
+        for i in range(3):
+            rect = pygame.Rect(i * ancho_sprite, 0, ancho_sprite, alto_sprite)
+            sprite = imagen_escalada.subsurface(rect).copy()
             sprites.append(sprite)
+
+        # Guardar cada sprite como una imagen aparte
+        for idx, sprite in enumerate(sprites):
+            pygame.image.save(sprite, f"./personajes/{self.nombre}/sprite_{idx}.png")
 
         self.movimientos: Dict[str, pygame.Surface] = {
             "posicion_normal": sprites[0],
@@ -309,7 +303,7 @@ while True:
 
         case "normal":
             screen.blit(
-                source=personaje_one.movimientos.get("ataque_inicial"),  # type: ignore
+                source=personaje_one.movimientos.get("posicion_normal"),  # type: ignore
                 dest=personaje_one.posicion,
             )
 
