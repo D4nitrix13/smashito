@@ -34,7 +34,7 @@ class Personaje:
 
         # Carga la imagen original (spritesheet con 4 sprites en fila)
         imagen_original = pygame.image.load(
-            rf"./personajes/{self.nombre}/spritesheet_otros_movimientos.png"
+            rf"./personajes/{self.nombre}/spritesheet_saltando.png"
         )
         # Escala uniformemente manteniendo la relación de aspecto
         ancho_objetivo = 300
@@ -193,7 +193,7 @@ def extraer_sprites_varios_tamanos(
 
 
 personaje_one: Personaje = Personaje(
-    nombre="Daniel",
+    nombre="daniel",
     vida=100,
     ataque=10,
     defensa=5,
