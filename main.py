@@ -1,7 +1,7 @@
 # https://youtu.be/AY9MnQ4x3zk?t=2685
 # https://arexxuru.itch.io/pixel-floor-texture-pack-ground-tile
 
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 import pygame
 
@@ -13,65 +13,28 @@ class Personaje:
         self.ataque: int = ataque
         # La posición inicial del personaje el primer index es la posición x y el segundo índice es la posición y
         self.defensa: int = defensa
-        self.__x: int = (WIDTH // 2) - 600
-        self.__y: int = HEIGHT - 510
-        self.__position_initial: Tuple[int, int] = (self.__x, self.__y)
+        self.__x: int = (WIDTH // 2) - 900
+        self.__y: int = HEIGHT - 400
         self.posicion: Tuple[int, int] = (self.__x, self.__y)
         self.ataque_contador: int = 0  # Contador de ataques
-        self.pie_actual: int = (
-            0  # Pie actual (0 para pie izquierdo, 1 para pie derecho)
-        )
         self.velocidad: int = 10  # Velocidad de movimiento
-        self.posicion_cuando_esta_agachado: Tuple[int, int] = (self.__x, self.__y + 140)
-        self.posicion_cuando_esta_defendiendose: Tuple[int, int] = (
-            self.__x,
-            self.__y + 120,
-        )
-        self.posicion_cuando_esta_caminando_pie_derecho: Tuple[int, int] = (
-            self.__x,
-            self.__y + 95,
-        )
 
-        # Carga la imagen original (spritesheet con 4 sprites en fila)
-        imagen_original = pygame.image.load(
-            rf"./personajes/{self.nombre}/spritesheet_saltando.png"
-        )
-        # Escala uniformemente manteniendo la relación de aspecto
-        ancho_objetivo = 300
-        alto_objetivo = 400
-        rect = imagen_original.get_rect()
-        relacion = min(ancho_objetivo / rect.width, alto_objetivo / rect.height)
-        nuevo_tamano = (int(rect.width * relacion), int(rect.height * relacion))
-        imagen_escalada = pygame.transform.scale(imagen_original, nuevo_tamano)
-
-        # Suponiendo que hay 4 sprites en una fila, todos del mismo ancho
-        ancho_sprite = imagen_escalada.get_width() // 3
-        alto_sprite = imagen_escalada.get_height()
-
-        sprites = []
-        for i in range(3):
-            rect = pygame.Rect(i * ancho_sprite, 0, ancho_sprite, alto_sprite)
-            sprite = imagen_escalada.subsurface(rect).copy()
-            sprites.append(sprite)
-
-        # Guardar cada sprite como una imagen aparte
-        for idx, sprite in enumerate(sprites):
-            pygame.image.save(sprite, f"./personajes/{self.nombre}/sprite_{idx}.png")
-
-        self.movimientos: Dict[str, pygame.Surface] = {
-            "posicion_normal": sprites[0],
-            "ataque_inicial": sprites[1],
-            "ataque_final": sprites[2],
+        rutas_imagenes = {
+            "posicion_normal": "./personajes/daniel/default.png",
+            "primer_ataque": "./personajes/daniel/primer_ataque.png",
+            "segundo_ataque": "./personajes/daniel/segundo_ataque.png",
+            "agachado": "./personajes/daniel/5_agachado_defendiendose.png",
+            # "segundo_ataque": "./personajes/daniel/2_segundo_ataque.png",
+            # "agachado_primer_ataque": "./personajes/daniel/3_agachado_primer_ataque.png",
+            # todo
         }
-
-    # @property
-    # def position_initial(self: "Personaje") -> Tuple[int, int]:
-    #     return self.__position_initial
-
-    # @position_initial.setter
-    # def position_initial(self: "Personaje", value: Tuple[int, int]) -> None:
-    #     self.__position_initial = value
-    #     self.posicion = (self.__x, self.__y)
+        tamano_imagen = (300, 300)
+        self.sprites = {
+            nombre: pygame.transform.scale(
+                pygame.image.load(ruta).convert_alpha(), tamano_imagen
+            )
+            for nombre, ruta in rutas_imagenes.items()
+        }
 
     @property
     def y(self: "Personaje") -> int:
@@ -81,9 +44,6 @@ class Personaje:
     def y(self: "Personaje", value: int) -> None:
         self.__y = value
         self.posicion = (self.__x, self.__y)
-        self.posicion_cuando_esta_agachado = (self.__x, self.__y + 140)
-        self.posicion_cuando_esta_defendiendose = (self.__x, self.__y + 120)
-        self.posicion_cuando_esta_caminando_pie_derecho = (self.__x, self.__y + 95)
 
     # @y.deleter
     # def y(self: "Personaje") -> None:
@@ -98,9 +58,6 @@ class Personaje:
     def x(self: "Personaje", value: int) -> None:
         self.__x = value
         self.posicion = (self.__x, self.__y)
-        self.posicion_cuando_esta_agachado = (self.__x, self.__y + 140)
-        self.posicion_cuando_esta_defendiendose = (self.__x, self.__y + 120)
-        self.posicion_cuando_esta_caminando_pie_derecho = (self.__x, self.__y + 95)
 
 
 pygame.init()
@@ -192,7 +149,7 @@ def extraer_sprites_varios_tamanos(
     return sprites
 
 
-personaje_one: Personaje = Personaje(
+personaje: Personaje = Personaje(
     nombre="daniel",
     vida=100,
     ataque=10,
@@ -200,112 +157,163 @@ personaje_one: Personaje = Personaje(
 )
 
 
+# Variables para las barras
+vida_actual = 100
+escudo_actual = 100
+barra_extra_actual = 0
+BARRA_EXTRA_MAX = 100
+
+# Tiempos para la barra extra
+tiempo_ultimo_incremento = pygame.time.get_ticks()
+INCREMENTO_BARRA_EXTRA = 20
+INTERVALO_BARRA_EXTRA = 10000  # 10 segundos en milisegundos
+
+
+def dibujar_barras():
+    # Posiciones y tamaños
+    x = 30
+    y = 30
+    ancho = 300
+    alto = 30
+    espacio = 15
+
+    # Vida (rojo)
+    pygame.draw.rect(screen, (60, 60, 60), (x, y, ancho, alto), border_radius=8)
+    pygame.draw.rect(
+        screen,
+        (220, 40, 40),
+        (x, y, ancho * (vida_actual / 100), alto),
+        border_radius=8,
+    )
+    font_barra = pygame.font.SysFont(None, 28)
+    txt_vida = font_barra.render(f"Vida: {vida_actual}", True, (255, 255, 255))
+    screen.blit(txt_vida, (x + 10, y + 2))
+
+    # Escudo (azul)
+    y += alto + espacio
+    pygame.draw.rect(screen, (60, 60, 60), (x, y, ancho, alto), border_radius=8)
+    pygame.draw.rect(
+        screen,
+        (40, 100, 220),
+        (x, y, ancho * (escudo_actual / 100), alto),
+        border_radius=8,
+    )
+    txt_escudo = font_barra.render(f"Escudo: {escudo_actual}", True, (255, 255, 255))
+    screen.blit(txt_escudo, (x + 10, y + 2))
+
+    # Barra extra (verde)
+    y += alto + espacio
+    pygame.draw.rect(screen, (60, 60, 60), (x, y, ancho, alto), border_radius=8)
+    pygame.draw.rect(
+        screen,
+        (40, 220, 80),
+        (x, y, ancho * (barra_extra_actual / BARRA_EXTRA_MAX), alto),
+        border_radius=8,
+    )
+    txt_extra = font_barra.render(f"Extra: {barra_extra_actual}", True, (255, 255, 255))
+    screen.blit(txt_extra, (x + 10, y + 2))
+
+
+def actualizar_barra_extra():
+    global barra_extra_actual, tiempo_ultimo_incremento
+    ahora = pygame.time.get_ticks()
+    if (
+        barra_extra_actual < BARRA_EXTRA_MAX
+        and ahora - tiempo_ultimo_incremento >= INTERVALO_BARRA_EXTRA
+    ):
+        barra_extra_actual = min(
+            barra_extra_actual + INCREMENTO_BARRA_EXTRA, BARRA_EXTRA_MAX
+        )
+        tiempo_ultimo_incremento = ahora
+
+
 # Agregar una variable de estado para controlar la animación
 estado_personaje: str = "normal"  # Puede ser "normal", "agachado", etc.
 
-while True:
+
+def manejar_eventos():
+    global estado_personaje
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_DOWN:
-                estado_personaje = "agachado"
-
+        elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_c:
-                personaje_one.ataque_contador += 1
-                match personaje_one.ataque_contador:
-                    case 1:
-                        estado_personaje = "ataque_inicial"
-                    case 2:
-                        estado_personaje = "ataque_final"
-                        personaje_one.ataque_contador = 0
+                personaje.ataque_contador += 1
+                if personaje.ataque_contador == 1:
+                    estado_personaje = "primer_ataque"
 
-            if event.key == pygame.K_w:
+                elif personaje.ataque_contador == 2:
+                    estado_personaje = "segundo_ataque"
+                    personaje.ataque_contador = 0
+
+            elif event.key == pygame.K_w:
                 estado_personaje = "defendiendose"
 
-            if event.key == pygame.K_LEFT:
-                match personaje_one.pie_actual:
-                    case 1:
-                        estado_personaje = "caminando_pie_derecho"
-                    case 2:
-                        estado_personaje = "caminando_pie_izquierdo"
-                personaje_one.x -= personaje_one.velocidad
+    # Movimiento continuo con teclas presionadas
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_DOWN]:
+        estado_personaje = "agachado"
+    elif estado_personaje == "agachado":
+        estado_personaje = "normal"
 
-            if event.key == pygame.K_RIGHT:
-                match personaje_one.pie_actual:
-                    case 1:
-                        estado_personaje = "caminando_pie_izquierdo"
-                    case 2:
-                        estado_personaje = "caminando_pie_derecho"
-                personaje_one.x += personaje_one.velocidad
+    if keys[pygame.K_RIGHT]:
+        personaje.x += personaje.velocidad
+    if keys[pygame.K_LEFT]:
+        personaje.x -= personaje.velocidad
 
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_DOWN:
-                estado_personaje = "normal"
-            if event.key == pygame.K_w:  # Manejar cuando se suelta la tecla W
-                estado_personaje = "normal"
 
-            if event.key == pygame.K_RIGHT:
-                estado_personaje = "normal"
+def dibujar():
+    for fondo in background_surfaces:
+        screen.blit(fondo, (0, 0))
+    for n in range(0, WIDTH, 100):
+        screen.blit(suelo_sprite, (n, HEIGHT - 110))
 
-            if event.key == pygame.K_LEFT:
-                estado_personaje = "normal"
+    dibujar_barras()
 
-            if event.key == pygame.K_c:
-                estado_personaje = "normal"
+    sprite_map = {
+        "agachado": ("agachado", (personaje.x, personaje.y)),
+        "primer_ataque": ("primer_ataque", (personaje.x, personaje.y)),
+        "segundo_ataque": ("segundo_ataque", (personaje.x, personaje.y)),
+        "defendiendose": ("defendiendose", (personaje.x, personaje.y)),
+        "normal": ("posicion_normal", (personaje.x, personaje.y)),
+    }
 
-    # Dibujar los fondos y otros elementos
-    for i in background_surfaces:
-        screen.blit(source=i, dest=(0, 0))  # Dibujar los fondos
-    n = 0
-    while n < WIDTH:
-        screen.blit(suelo_sprite, (n, HEIGHT - 110))  # Dibujar el suelo
-        n += 100
+    sprite_key, pos = sprite_map.get(
+        estado_personaje, ("posicion_normal", (personaje.x, personaje.y))
+    )
+    sprite = personaje.sprites.get(sprite_key)
+    if sprite:
+        screen.blit(sprite, pos)
 
-    match estado_personaje:
-        case "agachado":
-            screen.blit(
-                source=personaje_one.movimientos.get("agachado"),  # type: ignore
-                dest=personaje_one.posicion_cuando_esta_agachado,
-            )
 
-        case "ataque_inicial":
-            screen.blit(
-                source=personaje_one.movimientos.get("ataque_inicial"),  # type: ignore
-                dest=personaje_one.posicion,
-            )
+# Alternar ataques mientras la tecla 'c' esté presionada
+ataque_alternar = False
+ataque_tiempo_ultimo = 0
+ATAQUE_INTERVALO = 200  # milisegundos
 
-        case "ataque_final":
-            screen.blit(
-                source=personaje_one.movimientos.get("ataque_final"),  # type: ignore
-                dest=personaje_one.posicion,
-            )
+while True:
+    manejar_eventos()
+    actualizar_barra_extra()
 
-        case "defendiendose":
-            screen.blit(
-                source=personaje_one.movimientos.get("defendiendose"),  # type: ignore
-                dest=personaje_one.posicion_cuando_esta_defendiendose,
-            )
+    # Alternar ataques si la tecla 'c' está presionada
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_c]:
+        ahora = pygame.time.get_ticks()
+        if not ataque_alternar or ahora - ataque_tiempo_ultimo > ATAQUE_INTERVALO:
+            ataque_alternar = True
+            personaje.ataque_contador += 1
+            if personaje.ataque_contador == 1:
+                estado_personaje = "primer_ataque"
+            elif personaje.ataque_contador == 2:
+                estado_personaje = "segundo_ataque"
+                personaje.ataque_contador = 0
+            ataque_tiempo_ultimo = ahora
+    else:
+        ataque_alternar = False
+        if estado_personaje in ("primer_ataque", "segundo_ataque"):
+            estado_personaje = "normal"
 
-        # case "caminando_pie_derecho":
-        #     screen.blit(
-        #         source=personaje_one.movimientos.get("caminando_pie_derecho"),  # type: ignore
-        #         dest=personaje_one.posicion_cuando_esta_caminando_pie_derecho,
-        #     )
-
-        # case "caminando_pie_izquierdo":
-        #     screen.blit(
-        #         source=personaje_one.movimientos.get("caminando_pie_izquierdo"),  # type: ignore
-        #         dest=personaje_one.posicion,
-        #     )
-
-        case "normal":
-            screen.blit(
-                source=personaje_one.movimientos.get("posicion_normal"),  # type: ignore
-                dest=personaje_one.posicion,
-            )
-
+    dibujar()
     pygame.display.update()
     clock.tick(60)
