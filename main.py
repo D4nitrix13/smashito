@@ -24,6 +24,7 @@ class Personaje:
             "primer_ataque": "./personajes/daniel/primer_ataque.png",
             "segundo_ataque": "./personajes/daniel/segundo_ataque.png",
             "agachado": "./personajes/daniel/agachado.png",
+            "defendiendose": "./personajes/daniel/defendiendose.png",
             # "segundo_ataque": "./personajes/daniel/2_segundo_ataque.png",
             # "agachado_primer_ataque": "./personajes/daniel/3_agachado_primer_ataque.png",
             # todo
@@ -156,13 +157,21 @@ personaje: Personaje = Personaje(
     defensa=5,
 )
 
-# Variables para las barras del segundo personaje
+
+# Añadir hitbox a los personajes
+def obtener_hitbox(personaje: Personaje) -> pygame.Rect:
+    # Ajusta el tamaño y posición de la hitbox según el sprite
+    ancho, alto = 200, 250
+    return pygame.Rect(personaje.x + 90, personaje.y + 30, ancho, alto)
+
+
+# Variables para las barras del primer personaje
 vida_actual = 100
 escudo_actual = 100
 barra_extra_actual = 0
 BARRA_EXTRA_MAX = 100
 
-# Tiempos para la barra extra del segundo personaje
+# Tiempos para la barra extra del primer personaje
 tiempo_ultimo_incremento = pygame.time.get_ticks()
 INCREMENTO_BARRA_EXTRA = 20
 INTERVALO_BARRA_EXTRA = 10000  # 10 segundos en milisegundos
@@ -194,7 +203,7 @@ estado_personaje2: str = "normal"
 
 
 def dibujar_barras():
-    # Barras del primer personaje (izquierda)
+    # ... (sin cambios)
     x = 30
     y = 30
     ancho = 300
@@ -390,6 +399,24 @@ def dibujar():
     if sprite2:
         screen.blit(sprite2, pos2)
 
+    # Dibujar hitboxes (opcional, para depuración)
+    # pygame.draw.rect(screen, (255, 0, 0), obtener_hitbox(personaje), 2)
+    # pygame.draw.rect(screen, (0, 0, 255), obtener_hitbox(personaje2), 2)
+
+
+def detectar_colision_y_aplicar_dano():
+    global vida_actual, vida_actual2
+    hitbox1 = obtener_hitbox(personaje)
+    hitbox2 = obtener_hitbox(personaje2)
+    # Personaje 1 ataca a personaje 2
+    if estado_personaje in ("primer_ataque", "segundo_ataque"):
+        if hitbox1.colliderect(hitbox2):
+            vida_actual2 = max(vida_actual2 - 5, 0)
+    # Personaje 2 ataca a personaje 1
+    if estado_personaje2 in ("primer_ataque", "segundo_ataque"):
+        if hitbox2.colliderect(hitbox1):
+            vida_actual = max(vida_actual - 5, 0)
+
 
 # Alternar ataques mientras la tecla 'c' esté presionada
 ataque_alternar = False
@@ -448,10 +475,10 @@ while True:
         if estado_personaje2 in ("primer_ataque", "segundo_ataque"):
             estado_personaje2 = "normal"
 
+    detectar_colision_y_aplicar_dano()
     dibujar()
     pygame.display.update()
     clock.tick(60)
-    # Voltear la imagen del personaje 2 para que mire hacia la derecha
     # Voltear la imagen del personaje 2 para que mire hacia la derecha (solo una vez)
     if not hasattr(personaje2, "sprites_flipped"):
         for key in personaje2.sprites:
