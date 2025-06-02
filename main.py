@@ -18,13 +18,17 @@ class Personaje:
         self.posicion: Tuple[int, int] = (self.__x, self.__y)
         self.ataque_contador: int = 0  # Contador de ataques
         self.velocidad: int = 10  # Velocidad de movimiento
+        self.salto_tiempo_inicio: int = 0  # Tiempo de inicio del salto
 
         rutas_imagenes = {
             "posicion_normal": "./personajes/daniel/default.png",
             "primer_ataque": "./personajes/daniel/primer_ataque.png",
             "segundo_ataque": "./personajes/daniel/segundo_ataque.png",
             "agachado": "./personajes/daniel/agachado.png",
+            "saltando": "./personajes/daniel/saltando.png",
             "defendiendose": "./personajes/daniel/defendiendose.png",
+            "defendiendose_agachado": "./personajes/daniel/defendiendose_agachado.png",
+            # Asegúrate de que el archivo "./personajes/daniel/defendiendose_agachado.png" exista
             # "segundo_ataque": "./personajes/daniel/2_segundo_ataque.png",
             # "agachado_primer_ataque": "./personajes/daniel/3_agachado_primer_ataque.png",
             # todo
@@ -327,8 +331,6 @@ def manejar_eventos():
                 elif personaje.ataque_contador == 2:
                     estado_personaje = "segundo_ataque"
                     personaje.ataque_contador = 0
-            elif event.key == pygame.K_w:
-                estado_personaje = "defendiendose"
             # Controles para personaje 2
             if event.key == pygame.K_KP0:  # Numpad 0 para atacar
                 personaje2.ataque_contador += 1
@@ -339,22 +341,77 @@ def manejar_eventos():
                     personaje2.ataque_contador = 0
             elif event.key == pygame.K_KP7:  # Numpad 7 para defenderse
                 estado_personaje2 = "defendiendose"
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_KP7 and estado_personaje2 == "defendiendose":
+                estado_personaje2 = "normal"
 
     # Movimiento continuo con teclas presionadas
     keys = pygame.key.get_pressed()
     # Personaje 1
-    if keys[pygame.K_DOWN]:
+    if keys[pygame.K_DOWN] and keys[pygame.K_w]:
+        estado_personaje = "defendiendose_agachado"
+    elif keys[pygame.K_w]:
+        estado_personaje = "defendiendose"
+    elif keys[pygame.K_DOWN]:
         estado_personaje = "agachado"
-    elif estado_personaje == "agachado":
+    elif keys[pygame.K_UP]:
+        # Saltar solo si no está ya saltando
+        if estado_personaje != "saltando":
+            estado_personaje = "saltando"
+            personaje.salto_tiempo_inicio = pygame.time.get_ticks()
+    elif estado_personaje == "saltando":
+        # Si se presiona abajo, cancelar salto
+        if keys[pygame.K_DOWN]:
+            estado_personaje = "normal"
+        else:
+            # Si se mantiene arriba, no mantener en el aire
+            if not keys[pygame.K_UP]:
+                tiempo_en_aire = pygame.time.get_ticks() - getattr(
+                    personaje, "salto_tiempo_inicio", 0
+                )
+                if tiempo_en_aire >= 250:
+                    estado_personaje = "normal"
+    elif estado_personaje in (
+        "agachado",
+        "defendiendose",
+        "defendiendose_agachado",
+        "saltando",
+    ):
         estado_personaje = "normal"
     if keys[pygame.K_RIGHT]:
         personaje.x += personaje.velocidad
     if keys[pygame.K_LEFT]:
         personaje.x -= personaje.velocidad
-    # Personaje 2 (Numpad: 4, 6, 2 para izq, der, agacharse)
-    if keys[pygame.K_KP2]:
+    # Personaje 2 (Numpad: 4, 6, 2 para izq, der, agacharse, 8 para saltar)
+    if keys[pygame.K_KP2] and keys[pygame.K_KP7]:
+        estado_personaje2 = "defendiendose_agachado"
+    elif keys[pygame.K_KP7]:
+        estado_personaje2 = "defendiendose"
+    elif keys[pygame.K_KP2]:
         estado_personaje2 = "agachado"
-    elif estado_personaje2 == "agachado":
+    elif keys[pygame.K_KP8]:
+        # Saltar solo si no está ya saltando
+        if estado_personaje2 != "saltando":
+            estado_personaje2 = "saltando"
+            personaje2.salto_tiempo_inicio = pygame.time.get_ticks()
+    elif estado_personaje2 == "saltando":
+        # Si se presiona abajo, cancelar salto
+        if keys[pygame.K_KP2]:
+            estado_personaje2 = "normal"
+        else:
+            # Si se mantiene arriba, no mantener en el aire
+            if not keys[pygame.K_KP8]:
+                tiempo_en_aire2 = pygame.time.get_ticks() - getattr(
+                    personaje2, "salto_tiempo_inicio", 0
+                )
+                if tiempo_en_aire2 >= 250:
+                    estado_personaje2 = "normal"
+    elif estado_personaje2 in (
+        "agachado",
+        "defendiendose",
+        "defendiendose_agachado",
+        "saltando",
+    ):
         estado_personaje2 = "normal"
     if keys[pygame.K_KP6]:
         personaje2.x += personaje2.velocidad
@@ -369,12 +426,16 @@ def dibujar():
         screen.blit(suelo_sprite, (n, HEIGHT - 110))
 
     dibujar_barras()
-
     sprite_map = {
         "agachado": ("agachado", (personaje.x, personaje.y)),
         "primer_ataque": ("primer_ataque", (personaje.x, personaje.y)),
         "segundo_ataque": ("segundo_ataque", (personaje.x, personaje.y)),
         "defendiendose": ("defendiendose", (personaje.x, personaje.y)),
+        "defendiendose_agachado": (
+            "defendiendose_agachado",
+            (personaje.x, personaje.y + 5),
+        ),
+        "saltando": ("saltando", (personaje.x, personaje.y - 60)),
         "normal": ("posicion_normal", (personaje.x, personaje.y)),
     }
     sprite_map2 = {
@@ -382,6 +443,11 @@ def dibujar():
         "primer_ataque": ("primer_ataque", (personaje2.x, personaje2.y)),
         "segundo_ataque": ("segundo_ataque", (personaje2.x, personaje2.y)),
         "defendiendose": ("defendiendose", (personaje2.x, personaje2.y)),
+        "defendiendose_agachado": (
+            "defendiendose_agachado",
+            (personaje2.x, personaje2.y + 5),
+        ),
+        "saltando": ("saltando", (personaje2.x, personaje2.y - 60)),
         "normal": ("posicion_normal", (personaje2.x, personaje2.y)),
     }
 
@@ -405,17 +471,52 @@ def dibujar():
 
 
 def detectar_colision_y_aplicar_dano():
-    global vida_actual, vida_actual2
+    global vida_actual, vida_actual2, escudo_actual, escudo_actual2
     hitbox1 = obtener_hitbox(personaje)
     hitbox2 = obtener_hitbox(personaje2)
     # Personaje 1 ataca a personaje 2
     if estado_personaje in ("primer_ataque", "segundo_ataque"):
         if hitbox1.colliderect(hitbox2):
-            vida_actual2 = max(vida_actual2 - 5, 0)
+            if (
+                estado_personaje2 in ("defendiendose", "defendiendose_agachado")
+                and escudo_actual2 > 0
+            ):
+                escudo_actual2 = max(escudo_actual2 - 5, 0)
+            else:
+                vida_actual2 = max(vida_actual2 - 5, 0)
     # Personaje 2 ataca a personaje 1
     if estado_personaje2 in ("primer_ataque", "segundo_ataque"):
         if hitbox2.colliderect(hitbox1):
-            vida_actual = max(vida_actual - 5, 0)
+            if (
+                estado_personaje in ("defendiendose", "defendiendose_agachado")
+                and escudo_actual > 0
+            ):
+                escudo_actual = max(escudo_actual - 5, 0)
+            else:
+                vida_actual = max(vida_actual - 5, 0)
+
+
+# Recarga de escudo cada 5 segundos
+ESCUDO_RECARGA_INTERVALO = 5000  # milisegundos
+ultimo_recarga_escudo = pygame.time.get_ticks()
+ultimo_recarga_escudo2 = pygame.time.get_ticks()
+
+
+def recargar_escudos():
+    global escudo_actual, escudo_actual2, ultimo_recarga_escudo, ultimo_recarga_escudo2
+    ahora = pygame.time.get_ticks()
+    if (
+        escudo_actual < 100
+        and ahora - ultimo_recarga_escudo >= ESCUDO_RECARGA_INTERVALO
+    ):
+        escudo_actual = min(escudo_actual + 5, 100)
+        ultimo_recarga_escudo = ahora
+    if (
+        escudo_actual2 < 100
+        and ahora - ultimo_recarga_escudo2 >= ESCUDO_RECARGA_INTERVALO
+    ):
+        escudo_actual2 = min(escudo_actual2 + 5, 100)
+        ultimo_recarga_escudo2 = ahora
 
 
 # Alternar ataques mientras la tecla 'c' esté presionada
@@ -477,6 +578,7 @@ while True:
 
     detectar_colision_y_aplicar_dano()
     dibujar()
+    recargar_escudos()
     pygame.display.update()
     clock.tick(60)
     # Voltear la imagen del personaje 2 para que mire hacia la derecha (solo una vez)
