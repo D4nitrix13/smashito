@@ -170,6 +170,7 @@ def obtener_hitbox(personaje: Personaje) -> pygame.Rect:
 # Variables para las barras del primer personaje
 vida_actual = 100
 escudo_actual = 100
+# Barra especial (extra) del primer personaje
 barra_especial_actual = 30
 BARRA_EXTRA_MAX = 100
 
@@ -341,7 +342,11 @@ def manejar_eventos():
                     estado_personaje = "segundo_ataque"
                     personaje.ataque_contador = 0
             # Ataque especial personaje 1 (tecla X)
-            if event.key == pygame.K_x and not ataque_especial_en_progreso:
+            if (
+                event.key == pygame.K_x
+                and not ataque_especial_en_progreso
+                and barra_especial_actual > 0  # Solo si la barra es mayor a 0
+            ):
                 estado_personaje = "ataque_especial"
                 ataque_especial_en_progreso = True
                 ataque_especial_personaje = personaje
@@ -359,7 +364,11 @@ def manejar_eventos():
                     estado_personaje2 = "segundo_ataque"
                     personaje2.ataque_contador = 0
             # Ataque especial personaje 2 (tecla Numpad 9)
-            if event.key == pygame.K_KP9 and not ataque_especial_en_progreso:
+            if (
+                event.key == pygame.K_KP9
+                and not ataque_especial_en_progreso
+                and barra_especial_actual2 > 0  # Solo si la barra es mayor a 0
+            ):
                 estado_personaje2 = "ataque_especial"
                 ataque_especial_en_progreso = True
                 ataque_especial_personaje = personaje2
