@@ -29,7 +29,7 @@ class Personaje:
             "defendiendose": "./personajes/daniel/defendiendose.png",
             "defendiendose_agachado": "./personajes/daniel/defendiendose_agachado.png",
             "ataque_especial": "./personajes/daniel/ataque_especial.png",
-            # todo
+            "derrotado": "./personajes/daniel/derrotado.png",
         }
         tamano_imagen = (300, 300)
         self.sprites = {
@@ -328,6 +328,14 @@ def manejar_eventos():
         ataque_especial_direccion, \
         ataque_especial_personaje
 
+    # Si algún personaje está derrotado, bloquear todos los eventos excepto salir
+    if vida_actual == 0 or vida_actual2 == 0:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        return
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -400,6 +408,10 @@ def manejar_eventos():
     keys = pygame.key.get_pressed()
     # Si hay ataque especial en progreso, bloquear movimientos normales
     if ataque_especial_en_progreso:
+        return
+
+    # Si algún personaje está derrotado, bloquear movimientos
+    if vida_actual == 0 or vida_actual2 == 0:
         return
 
     # Personaje 1
@@ -483,6 +495,10 @@ def actualizar_ataque_especial():
     global vida_actual, vida_actual2, escudo_actual, escudo_actual2
     global barra_especial_actual, barra_especial_actual2
 
+    # Si algún personaje está derrotado, no hacer nada
+    if vida_actual == 0 or vida_actual2 == 0:
+        return
+
     if not ataque_especial_en_progreso or ataque_especial_personaje is None:
         return
 
@@ -564,6 +580,41 @@ def dibujar():
         screen.blit(suelo_sprite, (n, HEIGHT - 110))
 
     dibujar_barras()
+
+    # Si algún personaje está derrotado, mostrar sprite derrotado y texto ganador
+    if vida_actual == 0 or vida_actual2 == 0:
+        if vida_actual == 0:
+            # personaje 1 derrotado, personaje2 gana
+            sprite = personaje.sprites.get("derrotado")
+            if sprite:
+                screen.blit(sprite, (personaje.x, personaje.y))
+            sprite2 = personaje2.sprites.get(
+                "posicion_normal"
+            )  # ganador en pose normal
+            if sprite2:
+                screen.blit(sprite2, (personaje2.x, personaje2.y))
+            ganador = personaje2.nombre.title()
+        else:
+            # personaje 2 derrotado, personaje gana
+            sprite2 = personaje2.sprites.get("derrotado")
+            if sprite2:
+                screen.blit(sprite2, (personaje2.x, personaje2.y))
+            sprite = personaje.sprites.get("posicion_normal")
+            if sprite:
+                screen.blit(sprite, (personaje.x, personaje.y))
+            ganador = personaje.nombre.title()
+
+        # Mostrar texto de ganador
+        fuente_ganador = pygame.font.Font(
+            r"./fonts/CsdegitadrawnRegularDemo-XGJqP.otf", 90
+        )
+        texto_ganador = fuente_ganador.render(
+            f"Ganador: {ganador}", True, (255, 215, 0)
+        )
+        rect = texto_ganador.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        screen.blit(texto_ganador, rect)
+        return
+
     sprite_map = {
         "agachado": ("agachado", (personaje.x, personaje.y)),
         "primer_ataque": ("primer_ataque", (personaje.x, personaje.y)),
@@ -612,6 +663,10 @@ def dibujar():
 
 def detectar_colision_y_aplicar_dano():
     global vida_actual, vida_actual2, escudo_actual, escudo_actual2
+    # Si algún personaje está derrotado, no aplicar daño
+    if vida_actual == 0 or vida_actual2 == 0:
+        return
+
     hitbox1 = obtener_hitbox(personaje)
     hitbox2 = obtener_hitbox(personaje2)
 
@@ -667,6 +722,9 @@ ultimo_recarga_escudo2 = pygame.time.get_ticks()
 def recargar_escudos():
     global escudo_actual, escudo_actual2, ultimo_recarga_escudo, ultimo_recarga_escudo2
     ahora = pygame.time.get_ticks()
+    # No recargar si algún personaje está derrotado
+    if vida_actual == 0 or vida_actual2 == 0:
+        return
     if (
         escudo_actual < 100
         and ahora - ultimo_recarga_escudo >= ESCUDO_RECARGA_INTERVALO
@@ -698,7 +756,8 @@ while True:
 
     # Alternar ataques si la tecla 'c' está presionada (personaje 1)
     keys = pygame.key.get_pressed()
-    if not ataque_especial_en_progreso:
+    # Si algún personaje está derrotado, no alternar ataques
+    if not ataque_especial_en_progreso and vida_actual != 0 and vida_actual2 != 0:
         if keys[pygame.K_c]:
             ahora = pygame.time.get_ticks()
             if not ataque_alternar or ahora - ataque_tiempo_ultimo > ATAQUE_INTERVALO:
@@ -775,6 +834,34 @@ while True:
             for n in range(0, WIDTH, 100):
                 screen.blit(suelo_sprite, (n, HEIGHT - 110))
             dibujar_barras()
+
+            # Si algún personaje está derrotado, mostrar sprite derrotado y texto ganador
+            if vida_actual == 0 or vida_actual2 == 0:
+                if vida_actual == 0:
+                    sprite = personaje.sprites.get("derrotado")
+                    if sprite:
+                        screen.blit(sprite, (personaje.x, personaje.y))
+                    sprite2 = personaje2.sprites.get("posicion_normal")
+                    if sprite2:
+                        screen.blit(sprite2, (personaje2.x, personaje2.y))
+                    ganador = personaje2.nombre.title()
+                else:
+                    sprite2 = personaje2.sprites.get("derrotado")
+                    if sprite2:
+                        screen.blit(sprite2, (personaje2.x, personaje2.y))
+                    sprite = personaje.sprites.get("posicion_normal")
+                    if sprite:
+                        screen.blit(sprite, (personaje.x, personaje.y))
+                    ganador = personaje.nombre.title()
+                fuente_ganador = pygame.font.Font(
+                    r"./fonts/CsdegitadrawnRegularDemo-XGJqP.otf", 90
+                )
+                texto_ganador = fuente_ganador.render(
+                    f"Ganador: {ganador}", True, (255, 215, 0)
+                )
+                rect = texto_ganador.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+                screen.blit(texto_ganador, rect)
+                return
 
             global personaje_rotacion_angulo, personaje2_rotacion_angulo
 
