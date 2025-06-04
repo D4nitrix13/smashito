@@ -28,9 +28,7 @@ class Personaje:
             "saltando": "./personajes/daniel/saltando.png",
             "defendiendose": "./personajes/daniel/defendiendose.png",
             "defendiendose_agachado": "./personajes/daniel/defendiendose_agachado.png",
-            # Asegúrate de que el archivo "./personajes/daniel/defendiendose_agachado.png" exista
-            # "segundo_ataque": "./personajes/daniel/2_segundo_ataque.png",
-            # "agachado_primer_ataque": "./personajes/daniel/3_agachado_primer_ataque.png",
+            "ataque_especial": "./personajes/daniel/ataque_especial.png",
             # todo
         }
         tamano_imagen = (300, 300)
@@ -172,7 +170,7 @@ def obtener_hitbox(personaje: Personaje) -> pygame.Rect:
 # Variables para las barras del primer personaje
 vida_actual = 100
 escudo_actual = 100
-barra_extra_actual = 0
+barra_especial_actual = 30
 BARRA_EXTRA_MAX = 100
 
 # Tiempos para la barra extra del primer personaje
@@ -194,7 +192,7 @@ personaje2.y = HEIGHT - 400
 # Variables para las barras del segundo personaje
 vida_actual2 = 100
 escudo_actual2 = 100
-barra_extra_actual2 = 0
+barra_especial_actual2 = 0
 BARRA_EXTRA_MAX2 = 100
 
 # Tiempos para la barra extra del segundo personaje
@@ -207,7 +205,6 @@ estado_personaje2: str = "normal"
 
 
 def dibujar_barras():
-    # ... (sin cambios)
     x = 30
     y = 30
     ancho = 300
@@ -244,10 +241,12 @@ def dibujar_barras():
     pygame.draw.rect(
         screen,
         (40, 220, 80),
-        (x, y, ancho * (barra_extra_actual / BARRA_EXTRA_MAX), alto),
+        (x, y, ancho * (barra_especial_actual / BARRA_EXTRA_MAX), alto),
         border_radius=8,
     )
-    txt_extra = font_barra.render(f"Extra: {barra_extra_actual}", True, (255, 255, 255))
+    txt_extra = font_barra.render(
+        f"Especial: {barra_especial_actual}", True, (255, 255, 255)
+    )
     screen.blit(txt_extra, (x + 10, y + 5))
 
     # Barras del segundo personaje (derecha)
@@ -280,34 +279,34 @@ def dibujar_barras():
     pygame.draw.rect(
         screen,
         (40, 220, 80),
-        (x2, y2, ancho * (barra_extra_actual2 / BARRA_EXTRA_MAX2), alto),
+        (x2, y2, ancho * (barra_especial_actual2 / BARRA_EXTRA_MAX2), alto),
         border_radius=8,
     )
     txt_extra2 = font_barra.render(
-        f"Extra: {barra_extra_actual2}", True, (255, 255, 255)
+        f"Especial: {barra_especial_actual2}", True, (255, 255, 255)
     )
     screen.blit(txt_extra2, (x2 + 10, y2 + 5))
 
 
 def actualizar_barra_extra():
-    global barra_extra_actual, tiempo_ultimo_incremento
-    global barra_extra_actual2, tiempo_ultimo_incremento2
+    global barra_especial_actual, tiempo_ultimo_incremento
+    global barra_especial_actual2, tiempo_ultimo_incremento2
     ahora = pygame.time.get_ticks()
     if (
-        barra_extra_actual < BARRA_EXTRA_MAX
+        barra_especial_actual < BARRA_EXTRA_MAX
         and ahora - tiempo_ultimo_incremento >= INTERVALO_BARRA_EXTRA
     ):
-        barra_extra_actual = min(
-            barra_extra_actual + INCREMENTO_BARRA_EXTRA, BARRA_EXTRA_MAX
+        barra_especial_actual = min(
+            barra_especial_actual + INCREMENTO_BARRA_EXTRA, BARRA_EXTRA_MAX
         )
         tiempo_ultimo_incremento = ahora
 
     if (
-        barra_extra_actual2 < BARRA_EXTRA_MAX2
+        barra_especial_actual2 < BARRA_EXTRA_MAX2
         and ahora - tiempo_ultimo_incremento2 >= INTERVALO_BARRA_EXTRA2
     ):
-        barra_extra_actual2 = min(
-            barra_extra_actual2 + INCREMENTO_BARRA_EXTRA2, BARRA_EXTRA_MAX2
+        barra_especial_actual2 = min(
+            barra_especial_actual2 + INCREMENTO_BARRA_EXTRA2, BARRA_EXTRA_MAX2
         )
         tiempo_ultimo_incremento2 = ahora
 
@@ -315,9 +314,19 @@ def actualizar_barra_extra():
 # Agregar una variable de estado para controlar la animación
 estado_personaje: str = "normal"  # Puede ser "normal", "agachado", etc.
 
+# Variables para controlar el desplazamiento durante el ataque especial
+ataque_especial_en_progreso = False
+ataque_especial_direccion = 0  # -1 para izquierda, 1 para derecha
+ataque_especial_personaje = None  # Puede ser personaje o personaje2
+
 
 def manejar_eventos():
     global estado_personaje, estado_personaje2
+    global \
+        ataque_especial_en_progreso, \
+        ataque_especial_direccion, \
+        ataque_especial_personaje
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -331,6 +340,16 @@ def manejar_eventos():
                 elif personaje.ataque_contador == 2:
                     estado_personaje = "segundo_ataque"
                     personaje.ataque_contador = 0
+            # Ataque especial personaje 1 (tecla X)
+            if event.key == pygame.K_x and not ataque_especial_en_progreso:
+                estado_personaje = "ataque_especial"
+                ataque_especial_en_progreso = True
+                ataque_especial_personaje = personaje
+                # Determinar dirección hacia personaje2
+                if personaje.x < personaje2.x:
+                    ataque_especial_direccion = 1
+                else:
+                    ataque_especial_direccion = -1
             # Controles para personaje 2
             if event.key == pygame.K_KP0:  # Numpad 0 para atacar
                 personaje2.ataque_contador += 1
@@ -339,14 +358,41 @@ def manejar_eventos():
                 elif personaje2.ataque_contador == 2:
                     estado_personaje2 = "segundo_ataque"
                     personaje2.ataque_contador = 0
+            # Ataque especial personaje 2 (tecla Numpad 9)
+            if event.key == pygame.K_KP9 and not ataque_especial_en_progreso:
+                estado_personaje2 = "ataque_especial"
+                ataque_especial_en_progreso = True
+                ataque_especial_personaje = personaje2
+                # Determinar dirección hacia personaje1
+                if personaje2.x < personaje.x:
+                    ataque_especial_direccion = 1
+                else:
+                    ataque_especial_direccion = -1
             elif event.key == pygame.K_KP7:  # Numpad 7 para defenderse
                 estado_personaje2 = "defendiendose"
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_KP7 and estado_personaje2 == "defendiendose":
                 estado_personaje2 = "normal"
+            # Volver a estado normal al soltar ataque especial
+            if (
+                event.key == pygame.K_x
+                and estado_personaje == "ataque_especial"
+                and not ataque_especial_en_progreso
+            ):
+                estado_personaje = "normal"
+            if (
+                event.key == pygame.K_KP9
+                and estado_personaje2 == "ataque_especial"
+                and not ataque_especial_en_progreso
+            ):
+                estado_personaje2 = "normal"
 
     # Movimiento continuo con teclas presionadas
     keys = pygame.key.get_pressed()
+    # Si hay ataque especial en progreso, bloquear movimientos normales
+    if ataque_especial_en_progreso:
+        return
+
     # Personaje 1
     if keys[pygame.K_DOWN] and keys[pygame.K_w]:
         estado_personaje = "defendiendose_agachado"
@@ -419,6 +465,88 @@ def manejar_eventos():
         personaje2.x -= personaje2.velocidad
 
 
+def actualizar_ataque_especial():
+    global \
+        ataque_especial_en_progreso, \
+        ataque_especial_direccion, \
+        ataque_especial_personaje
+    global estado_personaje, estado_personaje2
+    global vida_actual, vida_actual2, escudo_actual, escudo_actual2
+    global barra_especial_actual, barra_especial_actual2
+
+    if not ataque_especial_en_progreso or ataque_especial_personaje is None:
+        return
+
+    # Determinar objetivo y estado
+    if ataque_especial_personaje == personaje:
+        objetivo = personaje2
+        estado = "ataque_especial"
+        barra_valor = barra_especial_actual
+        objetivo_escudo = "escudo_actual2"
+        objetivo_vida = "vida_actual2"
+        objetivo_estado = estado_personaje2
+    else:
+        objetivo = personaje
+        estado = "ataque_especial"
+        barra_valor = barra_especial_actual2
+        objetivo_escudo = "escudo_actual"
+        objetivo_vida = "vida_actual"
+        objetivo_estado = estado_personaje
+
+    # Mover el personaje hacia el objetivo
+    velocidad_especial = ataque_especial_personaje.velocidad * 2
+    if ataque_especial_personaje.x < objetivo.x:
+        ataque_especial_personaje.x = min(
+            ataque_especial_personaje.x + velocidad_especial, objetivo.x
+        )
+    else:
+        ataque_especial_personaje.x = max(
+            ataque_especial_personaje.x - velocidad_especial, objetivo.x
+        )
+
+    # El objetivo no puede moverse (su estado se mantiene)
+    # Cuando las hitboxes se tocan, termina el ataque especial y aplica daño
+    hitbox_atacante = obtener_hitbox(ataque_especial_personaje)
+    hitbox_objetivo = obtener_hitbox(objetivo)
+    if hitbox_atacante.colliderect(hitbox_objetivo):
+        # Calcular daño especial según barra especial
+        def calcular_dano_especial(barra_valor):
+            return int(10 + (barra_valor / 100) * 30)
+
+        dano = calcular_dano_especial(barra_valor)
+        # Si el objetivo está defendiendo y tiene escudo, dañar escudo
+        if (
+            ataque_especial_personaje == personaje
+            and estado_personaje2 in ("defendiendose", "defendiendose_agachado")
+            and escudo_actual2 > 0
+        ):
+            escudo_actual2 = max(escudo_actual2 - dano, 0)
+        elif (
+            ataque_especial_personaje == personaje2
+            and estado_personaje in ("defendiendose", "defendiendose_agachado")
+            and escudo_actual > 0
+        ):
+            escudo_actual = max(escudo_actual - dano, 0)
+        else:
+            if ataque_especial_personaje == personaje:
+                vida_actual2 = max(vida_actual2 - dano, 0)
+            else:
+                vida_actual = max(vida_actual - dano, 0)
+        # Reiniciar barra especial después de usar el ataque especial
+        if ataque_especial_personaje == personaje:
+            barra_especial_actual = 0
+        else:
+            barra_especial_actual2 = 0
+        ataque_especial_en_progreso = False
+        ataque_especial_personaje = None
+        # Volver a estado normal después del ataque especial
+        if estado == "ataque_especial":
+            if objetivo == personaje2:
+                estado_personaje = "normal"
+            else:
+                estado_personaje2 = "normal"
+
+
 def dibujar():
     for fondo in background_surfaces:
         screen.blit(fondo, (0, 0))
@@ -436,6 +564,7 @@ def dibujar():
             (personaje.x, personaje.y + 5),
         ),
         "saltando": ("saltando", (personaje.x, personaje.y - 60)),
+        "ataque_especial": ("ataque_especial", (personaje.x, personaje.y)),
         "normal": ("posicion_normal", (personaje.x, personaje.y)),
     }
     sprite_map2 = {
@@ -448,6 +577,7 @@ def dibujar():
             (personaje2.x, personaje2.y + 5),
         ),
         "saltando": ("saltando", (personaje2.x, personaje2.y - 60)),
+        "ataque_especial": ("ataque_especial", (personaje2.x, personaje2.y)),
         "normal": ("posicion_normal", (personaje2.x, personaje2.y)),
     }
 
@@ -474,26 +604,48 @@ def detectar_colision_y_aplicar_dano():
     global vida_actual, vida_actual2, escudo_actual, escudo_actual2
     hitbox1 = obtener_hitbox(personaje)
     hitbox2 = obtener_hitbox(personaje2)
+
+    # Calcular daño especial según barra especial
+    def calcular_dano_especial(barra_valor):
+        # Mínimo 10, máximo 40 (puedes ajustar estos valores)
+        return int(10 + (barra_valor / 100) * 30)
+
     # Personaje 1 ataca a personaje 2
-    if estado_personaje in ("primer_ataque", "segundo_ataque"):
+    if estado_personaje in ("primer_ataque", "segundo_ataque", "ataque_especial"):
         if hitbox1.colliderect(hitbox2):
             if (
                 estado_personaje2 in ("defendiendose", "defendiendose_agachado")
                 and escudo_actual2 > 0
             ):
-                escudo_actual2 = max(escudo_actual2 - 5, 0)
+                if estado_personaje == "ataque_especial":
+                    dano = calcular_dano_especial(barra_especial_actual)
+                    escudo_actual2 = max(escudo_actual2 - dano, 0)
+                else:
+                    escudo_actual2 = max(escudo_actual2 - 5, 0)
             else:
-                vida_actual2 = max(vida_actual2 - 5, 0)
+                if estado_personaje == "ataque_especial":
+                    dano = calcular_dano_especial(barra_especial_actual)
+                    vida_actual2 = max(vida_actual2 - dano, 0)
+                else:
+                    vida_actual2 = max(vida_actual2 - 5, 0)
     # Personaje 2 ataca a personaje 1
-    if estado_personaje2 in ("primer_ataque", "segundo_ataque"):
+    if estado_personaje2 in ("primer_ataque", "segundo_ataque", "ataque_especial"):
         if hitbox2.colliderect(hitbox1):
             if (
                 estado_personaje in ("defendiendose", "defendiendose_agachado")
                 and escudo_actual > 0
             ):
-                escudo_actual = max(escudo_actual - 5, 0)
+                if estado_personaje2 == "ataque_especial":
+                    dano = calcular_dano_especial(barra_especial_actual2)
+                    escudo_actual = max(escudo_actual - dano, 0)
+                else:
+                    escudo_actual = max(escudo_actual - 5, 0)
             else:
-                vida_actual = max(vida_actual - 5, 0)
+                if estado_personaje2 == "ataque_especial":
+                    dano = calcular_dano_especial(barra_especial_actual2)
+                    vida_actual = max(vida_actual - dano, 0)
+                else:
+                    vida_actual = max(vida_actual - 5, 0)
 
 
 # Recarga de escudo cada 5 segundos
@@ -532,49 +684,54 @@ ATAQUE_INTERVALO2 = 200
 while True:
     manejar_eventos()
     actualizar_barra_extra()
+    actualizar_ataque_especial()
 
     # Alternar ataques si la tecla 'c' está presionada (personaje 1)
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_c]:
-        ahora = pygame.time.get_ticks()
-        if not ataque_alternar or ahora - ataque_tiempo_ultimo > ATAQUE_INTERVALO:
-            if not ataque_alternar:
+    if not ataque_especial_en_progreso:
+        if keys[pygame.K_c]:
+            ahora = pygame.time.get_ticks()
+            if not ataque_alternar or ahora - ataque_tiempo_ultimo > ATAQUE_INTERVALO:
+                if not ataque_alternar:
+                    personaje.ataque_contador = 0
+                ataque_alternar = True
+                personaje.ataque_contador += 1
+                if personaje.ataque_contador == 1:
+                    estado_personaje = "primer_ataque"
+                elif personaje.ataque_contador == 2:
+                    estado_personaje = "segundo_ataque"
+                    personaje.ataque_contador = 0
+                ataque_tiempo_ultimo = ahora
+        else:
+            if ataque_alternar:
                 personaje.ataque_contador = 0
-            ataque_alternar = True
-            personaje.ataque_contador += 1
-            if personaje.ataque_contador == 1:
-                estado_personaje = "primer_ataque"
-            elif personaje.ataque_contador == 2:
-                estado_personaje = "segundo_ataque"
-                personaje.ataque_contador = 0
-            ataque_tiempo_ultimo = ahora
-    else:
-        if ataque_alternar:
-            personaje.ataque_contador = 0
-        ataque_alternar = False
-        if estado_personaje in ("primer_ataque", "segundo_ataque"):
-            estado_personaje = "normal"
+            ataque_alternar = False
+            if estado_personaje in ("primer_ataque", "segundo_ataque"):
+                estado_personaje = "normal"
 
-    # Alternar ataques para personaje 2 (Numpad 0)
-    if keys[pygame.K_KP0]:
-        ahora2 = pygame.time.get_ticks()
-        if not ataque_alternar2 or ahora2 - ataque_tiempo_ultimo2 > ATAQUE_INTERVALO2:
-            if not ataque_alternar2:
+        # Alternar ataques para personaje 2 (Numpad 0)
+        if keys[pygame.K_KP0]:
+            ahora2 = pygame.time.get_ticks()
+            if (
+                not ataque_alternar2
+                or ahora2 - ataque_tiempo_ultimo2 > ATAQUE_INTERVALO2
+            ):
+                if not ataque_alternar2:
+                    personaje2.ataque_contador = 0
+                ataque_alternar2 = True
+                personaje2.ataque_contador += 1
+                if personaje2.ataque_contador == 1:
+                    estado_personaje2 = "primer_ataque"
+                elif personaje2.ataque_contador == 2:
+                    estado_personaje2 = "segundo_ataque"
+                    personaje2.ataque_contador = 0
+                ataque_tiempo_ultimo2 = ahora2
+        else:
+            if ataque_alternar2:
                 personaje2.ataque_contador = 0
-            ataque_alternar2 = True
-            personaje2.ataque_contador += 1
-            if personaje2.ataque_contador == 1:
-                estado_personaje2 = "primer_ataque"
-            elif personaje2.ataque_contador == 2:
-                estado_personaje2 = "segundo_ataque"
-                personaje2.ataque_contador = 0
-            ataque_tiempo_ultimo2 = ahora2
-    else:
-        if ataque_alternar2:
-            personaje2.ataque_contador = 0
-        ataque_alternar2 = False
-        if estado_personaje2 in ("primer_ataque", "segundo_ataque"):
-            estado_personaje2 = "normal"
+            ataque_alternar2 = False
+            if estado_personaje2 in ("primer_ataque", "segundo_ataque"):
+                estado_personaje2 = "normal"
 
     detectar_colision_y_aplicar_dano()
     dibujar()
