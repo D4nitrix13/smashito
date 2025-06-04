@@ -292,6 +292,9 @@ def dibujar_barras():
 def actualizar_barra_extra():
     global barra_especial_actual, tiempo_ultimo_incremento
     global barra_especial_actual2, tiempo_ultimo_incremento2
+    # No actualizar si algún personaje está derrotado
+    if vida_actual == 0 or vida_actual2 == 0:
+        return
     ahora = pygame.time.get_ticks()
     if (
         barra_especial_actual < BARRA_EXTRA_MAX
@@ -578,16 +581,13 @@ def dibujar():
         screen.blit(fondo, (0, 0))
     for n in range(0, WIDTH, 100):
         screen.blit(suelo_sprite, (n, HEIGHT - 110))
-
-    dibujar_barras()
-
     # Si algún personaje está derrotado, mostrar sprite derrotado y texto ganador
     if vida_actual == 0 or vida_actual2 == 0:
         if vida_actual == 0:
             # personaje 1 derrotado, personaje2 gana
             sprite = personaje.sprites.get("derrotado")
             if sprite:
-                screen.blit(sprite, (personaje.x, personaje.y))
+                screen.blit(sprite, (personaje.x, personaje.y + 60))
             sprite2 = personaje2.sprites.get(
                 "posicion_normal"
             )  # ganador en pose normal
@@ -598,7 +598,7 @@ def dibujar():
             # personaje 2 derrotado, personaje gana
             sprite2 = personaje2.sprites.get("derrotado")
             if sprite2:
-                screen.blit(sprite2, (personaje2.x, personaje2.y))
+                screen.blit(sprite2, (personaje2.x, personaje2.y + 60))
             sprite = personaje.sprites.get("posicion_normal")
             if sprite:
                 screen.blit(sprite, (personaje.x, personaje.y))
@@ -611,6 +611,17 @@ def dibujar():
         texto_ganador = fuente_ganador.render(
             f"Ganador: {ganador}", True, (255, 215, 0)
         )
+        rect = texto_ganador.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        screen.blit(texto_ganador, rect)
+        # Detener la actualización de barras y escudo cuando alguien pierde
+        pygame.display.update()
+        clock.tick(60)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+        return
         rect = texto_ganador.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         screen.blit(texto_ganador, rect)
         return
@@ -840,7 +851,7 @@ while True:
                 if vida_actual == 0:
                     sprite = personaje.sprites.get("derrotado")
                     if sprite:
-                        screen.blit(sprite, (personaje.x, personaje.y))
+                        screen.blit(sprite, (personaje.x, personaje.y + 60))
                     sprite2 = personaje2.sprites.get("posicion_normal")
                     if sprite2:
                         screen.blit(sprite2, (personaje2.x, personaje2.y))
@@ -848,7 +859,7 @@ while True:
                 else:
                     sprite2 = personaje2.sprites.get("derrotado")
                     if sprite2:
-                        screen.blit(sprite2, (personaje2.x, personaje2.y))
+                        screen.blit(sprite2, (personaje2.x, personaje2.y + 60))
                     sprite = personaje.sprites.get("posicion_normal")
                     if sprite:
                         screen.blit(sprite, (personaje.x, personaje.y))
