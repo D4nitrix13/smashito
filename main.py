@@ -494,7 +494,8 @@ def actualizar_ataque_especial():
         objetivo_estado = estado_personaje
 
     # Mover el personaje hacia el objetivo
-    velocidad_especial = ataque_especial_personaje.velocidad * 2
+    # Velocidad del ataque especial
+    velocidad_especial = ataque_especial_personaje.velocidad * 5
     if ataque_especial_personaje.x < objetivo.x:
         ataque_especial_personaje.x = min(
             ataque_especial_personaje.x + velocidad_especial, objetivo.x
@@ -745,3 +746,5 @@ while True:
                 personaje2.sprites[key], True, False
             )
         personaje2.sprites_flipped = True  # type: ignore
+
+        
