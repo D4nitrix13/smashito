@@ -759,6 +759,7 @@ while True:
 
         # Sobrescribe dibujar para rotar si ataque especial y nombre es "daniel"
         _original_dibujar = dibujar
+
         def dibujar():
             for fondo in background_surfaces:
                 screen.blit(fondo, (0, 0))
@@ -774,16 +775,26 @@ while True:
                 "primer_ataque": ("primer_ataque", (personaje.x, personaje.y)),
                 "segundo_ataque": ("segundo_ataque", (personaje.x, personaje.y)),
                 "defendiendose": ("defendiendose", (personaje.x, personaje.y)),
-                "defendiendose_agachado": ("defendiendose_agachado", (personaje.x, personaje.y + 5)),
+                "defendiendose_agachado": (
+                    "defendiendose_agachado",
+                    (personaje.x, personaje.y + 5),
+                ),
                 "saltando": ("saltando", (personaje.x, personaje.y - 60)),
                 "ataque_especial": ("ataque_especial", (personaje.x, personaje.y)),
                 "normal": ("posicion_normal", (personaje.x, personaje.y)),
             }.get(estado_personaje, ("posicion_normal", (personaje.x, personaje.y)))
             sprite = personaje.sprites.get(sprite_key)
             if sprite:
-                if estado_personaje == "ataque_especial" and personaje.nombre == "daniel" and ataque_especial_en_progreso and ataque_especial_personaje == personaje:
+                if (
+                    estado_personaje == "ataque_especial"
+                    and personaje.nombre == "daniel"
+                    and ataque_especial_en_progreso
+                    and ataque_especial_personaje == personaje
+                ):
                     personaje_rotacion_angulo = (personaje_rotacion_angulo + 45) % 360
-                    rotated, rotated_rect = rotar_sprite(sprite, personaje_rotacion_angulo)
+                    rotated, rotated_rect = rotar_sprite(
+                        sprite, personaje_rotacion_angulo
+                    )
                     rotated_rect.topleft = pos
                     screen.blit(rotated, rotated_rect)
                 else:
@@ -796,19 +807,30 @@ while True:
                 "primer_ataque": ("primer_ataque", (personaje2.x, personaje2.y)),
                 "segundo_ataque": ("segundo_ataque", (personaje2.x, personaje2.y)),
                 "defendiendose": ("defendiendose", (personaje2.x, personaje2.y)),
-                "defendiendose_agachado": ("defendiendose_agachado", (personaje2.x, personaje2.y + 5)),
+                "defendiendose_agachado": (
+                    "defendiendose_agachado",
+                    (personaje2.x, personaje2.y + 5),
+                ),
                 "saltando": ("saltando", (personaje2.x, personaje2.y - 60)),
                 "ataque_especial": ("ataque_especial", (personaje2.x, personaje2.y)),
                 "normal": ("posicion_normal", (personaje2.x, personaje2.y)),
             }.get(estado_personaje2, ("posicion_normal", (personaje2.x, personaje2.y)))
             sprite2 = personaje2.sprites.get(sprite_key2)
             if sprite2:
-                if estado_personaje2 == "ataque_especial" and personaje2.nombre == "daniel" and ataque_especial_en_progreso and ataque_especial_personaje == personaje2:
+                if (
+                    estado_personaje2 == "ataque_especial"
+                    and personaje2.nombre == "daniel"
+                    and ataque_especial_en_progreso
+                    and ataque_especial_personaje == personaje2
+                ):
                     personaje2_rotacion_angulo = (personaje2_rotacion_angulo + 45) % 360
-                    rotated2, rotated_rect2 = rotar_sprite(sprite2, personaje2_rotacion_angulo)
+                    rotated2, rotated_rect2 = rotar_sprite(
+                        sprite2, personaje2_rotacion_angulo
+                    )
                     rotated_rect2.topleft = pos2
                     screen.blit(rotated2, rotated_rect2)
                 else:
                     personaje2_rotacion_angulo = 0
                     screen.blit(sprite2, pos2)
+
         dibujar = dibujar
