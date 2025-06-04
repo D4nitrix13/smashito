@@ -38,8 +38,6 @@ class Personaje:
             )
             for nombre, ruta in rutas_imagenes.items()
         }
-        # Inicializar atributo de rotación para ataque especial
-        self._rotacion_ataque_especial = 0
 
     @property
     def y(self: "Personaje") -> int:
@@ -352,9 +350,6 @@ def manejar_eventos():
                     ataque_especial_direccion = 1
                 else:
                     ataque_especial_direccion = -1
-                # Inicializar ángulo de rotación si es Daniel
-                if personaje.nombre == "daniel":
-                    personaje._rotacion_ataque_especial = 0
             # Controles para personaje 2
             if event.key == pygame.K_KP0:  # Numpad 0 para atacar
                 personaje2.ataque_contador += 1
@@ -373,9 +368,6 @@ def manejar_eventos():
                     ataque_especial_direccion = 1
                 else:
                     ataque_especial_direccion = -1
-                # Inicializar ángulo de rotación si es Daniel
-                if personaje2.nombre == "daniel":
-                    personaje2._rotacion_ataque_especial = 0
             elif event.key == pygame.K_KP7:  # Numpad 7 para defenderse
                 estado_personaje2 = "defendiendose"
         elif event.type == pygame.KEYUP:
@@ -513,17 +505,6 @@ def actualizar_ataque_especial():
             ataque_especial_personaje.x - velocidad_especial, objetivo.x
         )
 
-    # Si el personaje es "daniel" y está en ataque especial, rotar el sprite
-    if (
-        getattr(ataque_especial_personaje, "nombre", "") == "daniel"
-        and estado == "ataque_especial"
-    ):
-        if not hasattr(ataque_especial_personaje, "_rotacion_ataque_especial"):
-            ataque_especial_personaje._rotacion_ataque_especial = 0
-        ataque_especial_personaje._rotacion_ataque_especial = (
-            ataque_especial_personaje._rotacion_ataque_especial + 45
-        ) % 360
-
     # El objetivo no puede moverse (su estado se mantiene)
     # Cuando las hitboxes se tocan, termina el ataque especial y aplica daño
     hitbox_atacante = obtener_hitbox(ataque_especial_personaje)
@@ -565,11 +546,6 @@ def actualizar_ataque_especial():
                 estado_personaje = "normal"
             else:
                 estado_personaje2 = "normal"
-        # Resetear rotación al terminar ataque especial
-        if hasattr(personaje, "_rotacion_ataque_especial"):
-            personaje._rotacion_ataque_especial = 0
-        if hasattr(personaje2, "_rotacion_ataque_especial"):
-            personaje2._rotacion_ataque_especial = 0
 
 
 def dibujar():
@@ -606,56 +582,233 @@ def dibujar():
         "normal": ("posicion_normal", (personaje2.x, personaje2.y)),
     }
 
-    # --- Personaje 1 ---
     sprite_key, pos = sprite_map.get(
         estado_personaje, ("posicion_normal", (personaje.x, personaje.y))
     )
     sprite = personaje.sprites.get(sprite_key)
-    # Si está en ataque especial y es Daniel, rotar el sprite
-    if (
-        estado_personaje == "ataque_especial"
-        and getattr(personaje, "nombre", "") == "daniel"
-        and hasattr(personaje, "_rotacion_ataque_especial")
-    ):
-        angulo = personaje._rotacion_ataque_especial
-        if sprite:
-            sprite_rotado = pygame.transform.rotate(sprite, angulo)
-            rect = sprite_rotado.get_rect(
-                center=(
-                    personaje.x + sprite.get_width() // 2,
-                    personaje.y + sprite.get_height() // 2,
-                )
-            )
-            screen.blit(sprite_rotado, rect.topleft)
-    else:
-        if sprite:
-            screen.blit(sprite, pos)
+    if sprite:
+        screen.blit(sprite, pos)
 
-    # --- Personaje 2 ---
     sprite_key2, pos2 = sprite_map2.get(
         estado_personaje2, ("posicion_normal", (personaje2.x, personaje2.y))
     )
     sprite2 = personaje2.sprites.get(sprite_key2)
-    # Si está en ataque especial y es Daniel, rotar el sprite
-    if (
-        estado_personaje2 == "ataque_especial"
-        and getattr(personaje2, "nombre", "") == "daniel"
-        and hasattr(personaje2, "_rotacion_ataque_especial")
-    ):
-        angulo2 = personaje2._rotacion_ataque_especial
-        if sprite2:
-            sprite2_rotado = pygame.transform.rotate(sprite2, angulo2)
-            rect2 = sprite2_rotado.get_rect(
-                center=(
-                    personaje2.x + sprite2.get_width() // 2,
-                    personaje2.y + sprite2.get_height() // 2,
-                )
-            )
-            screen.blit(sprite2_rotado, rect2.topleft)
-    else:
-        if sprite2:
-            screen.blit(sprite2, pos2)
+    if sprite2:
+        screen.blit(sprite2, pos2)
 
     # Dibujar hitboxes (opcional, para depuración)
     # pygame.draw.rect(screen, (255, 0, 0), obtener_hitbox(personaje), 2)
     # pygame.draw.rect(screen, (0, 0, 255), obtener_hitbox(personaje2), 2)
+
+
+def detectar_colision_y_aplicar_dano():
+    global vida_actual, vida_actual2, escudo_actual, escudo_actual2
+    hitbox1 = obtener_hitbox(personaje)
+    hitbox2 = obtener_hitbox(personaje2)
+
+    # Calcular daño especial según barra especial
+    def calcular_dano_especial(barra_valor):
+        # Mínimo 10, máximo 40 (puedes ajustar estos valores)
+        return int(10 + (barra_valor / 100) * 30)
+
+    # Personaje 1 ataca a personaje 2
+    if estado_personaje in ("primer_ataque", "segundo_ataque", "ataque_especial"):
+        if hitbox1.colliderect(hitbox2):
+            if (
+                estado_personaje2 in ("defendiendose", "defendiendose_agachado")
+                and escudo_actual2 > 0
+            ):
+                if estado_personaje == "ataque_especial":
+                    dano = calcular_dano_especial(barra_especial_actual)
+                    escudo_actual2 = max(escudo_actual2 - dano, 0)
+                else:
+                    escudo_actual2 = max(escudo_actual2 - 5, 0)
+            else:
+                if estado_personaje == "ataque_especial":
+                    dano = calcular_dano_especial(barra_especial_actual)
+                    vida_actual2 = max(vida_actual2 - dano, 0)
+                else:
+                    vida_actual2 = max(vida_actual2 - 5, 0)
+    # Personaje 2 ataca a personaje 1
+    if estado_personaje2 in ("primer_ataque", "segundo_ataque", "ataque_especial"):
+        if hitbox2.colliderect(hitbox1):
+            if (
+                estado_personaje in ("defendiendose", "defendiendose_agachado")
+                and escudo_actual > 0
+            ):
+                if estado_personaje2 == "ataque_especial":
+                    dano = calcular_dano_especial(barra_especial_actual2)
+                    escudo_actual = max(escudo_actual - dano, 0)
+                else:
+                    escudo_actual = max(escudo_actual - 5, 0)
+            else:
+                if estado_personaje2 == "ataque_especial":
+                    dano = calcular_dano_especial(barra_especial_actual2)
+                    vida_actual = max(vida_actual - dano, 0)
+                else:
+                    vida_actual = max(vida_actual - 5, 0)
+
+
+# Recarga de escudo cada 5 segundos
+ESCUDO_RECARGA_INTERVALO = 5000  # milisegundos
+ultimo_recarga_escudo = pygame.time.get_ticks()
+ultimo_recarga_escudo2 = pygame.time.get_ticks()
+
+
+def recargar_escudos():
+    global escudo_actual, escudo_actual2, ultimo_recarga_escudo, ultimo_recarga_escudo2
+    ahora = pygame.time.get_ticks()
+    if (
+        escudo_actual < 100
+        and ahora - ultimo_recarga_escudo >= ESCUDO_RECARGA_INTERVALO
+    ):
+        escudo_actual = min(escudo_actual + 5, 100)
+        ultimo_recarga_escudo = ahora
+    if (
+        escudo_actual2 < 100
+        and ahora - ultimo_recarga_escudo2 >= ESCUDO_RECARGA_INTERVALO
+    ):
+        escudo_actual2 = min(escudo_actual2 + 5, 100)
+        ultimo_recarga_escudo2 = ahora
+
+
+# Alternar ataques mientras la tecla 'c' esté presionada
+ataque_alternar = False
+ataque_tiempo_ultimo = 0
+ATAQUE_INTERVALO = 200  # milisegundos
+
+# Alternar ataques para personaje 2
+ataque_alternar2 = False
+ataque_tiempo_ultimo2 = 0
+ATAQUE_INTERVALO2 = 200
+
+while True:
+    manejar_eventos()
+    actualizar_barra_extra()
+    actualizar_ataque_especial()
+
+    # Alternar ataques si la tecla 'c' está presionada (personaje 1)
+    keys = pygame.key.get_pressed()
+    if not ataque_especial_en_progreso:
+        if keys[pygame.K_c]:
+            ahora = pygame.time.get_ticks()
+            if not ataque_alternar or ahora - ataque_tiempo_ultimo > ATAQUE_INTERVALO:
+                if not ataque_alternar:
+                    personaje.ataque_contador = 0
+                ataque_alternar = True
+                personaje.ataque_contador += 1
+                if personaje.ataque_contador == 1:
+                    estado_personaje = "primer_ataque"
+                elif personaje.ataque_contador == 2:
+                    estado_personaje = "segundo_ataque"
+                    personaje.ataque_contador = 0
+                ataque_tiempo_ultimo = ahora
+        else:
+            if ataque_alternar:
+                personaje.ataque_contador = 0
+            ataque_alternar = False
+            if estado_personaje in ("primer_ataque", "segundo_ataque"):
+                estado_personaje = "normal"
+
+        # Alternar ataques para personaje 2 (Numpad 0)
+        if keys[pygame.K_KP0]:
+            ahora2 = pygame.time.get_ticks()
+            if (
+                not ataque_alternar2
+                or ahora2 - ataque_tiempo_ultimo2 > ATAQUE_INTERVALO2
+            ):
+                if not ataque_alternar2:
+                    personaje2.ataque_contador = 0
+                ataque_alternar2 = True
+                personaje2.ataque_contador += 1
+                if personaje2.ataque_contador == 1:
+                    estado_personaje2 = "primer_ataque"
+                elif personaje2.ataque_contador == 2:
+                    estado_personaje2 = "segundo_ataque"
+                    personaje2.ataque_contador = 0
+                ataque_tiempo_ultimo2 = ahora2
+        else:
+            if ataque_alternar2:
+                personaje2.ataque_contador = 0
+            ataque_alternar2 = False
+            if estado_personaje2 in ("primer_ataque", "segundo_ataque"):
+                estado_personaje2 = "normal"
+
+    detectar_colision_y_aplicar_dano()
+    dibujar()
+    recargar_escudos()
+    pygame.display.update()
+    clock.tick(60)
+    # Voltear la imagen del personaje 2 para que mire hacia la derecha (solo una vez)
+    if not hasattr(personaje2, "sprites_flipped"):
+        for key in personaje2.sprites:
+            personaje2.sprites[key] = pygame.transform.flip(
+                personaje2.sprites[key], True, False
+            )
+        personaje2.sprites_flipped = True  # type: ignore
+
+        # Rotación para ataque especial de "daniel"
+        personaje_rotacion_angulo = 0
+        personaje2_rotacion_angulo = 0
+
+        def rotar_sprite(sprite, angulo):
+            rect = sprite.get_rect()
+            rotated = pygame.transform.rotate(sprite, angulo)
+            rotated_rect = rotated.get_rect(center=rect.center)
+            return rotated, rotated_rect
+
+        # Sobrescribe dibujar para rotar si ataque especial y nombre es "daniel"
+        _original_dibujar = dibujar
+        def dibujar():
+            for fondo in background_surfaces:
+                screen.blit(fondo, (0, 0))
+            for n in range(0, WIDTH, 100):
+                screen.blit(suelo_sprite, (n, HEIGHT - 110))
+            dibujar_barras()
+
+            global personaje_rotacion_angulo, personaje2_rotacion_angulo
+
+            # Personaje 1
+            sprite_key, pos = {
+                "agachado": ("agachado", (personaje.x, personaje.y)),
+                "primer_ataque": ("primer_ataque", (personaje.x, personaje.y)),
+                "segundo_ataque": ("segundo_ataque", (personaje.x, personaje.y)),
+                "defendiendose": ("defendiendose", (personaje.x, personaje.y)),
+                "defendiendose_agachado": ("defendiendose_agachado", (personaje.x, personaje.y + 5)),
+                "saltando": ("saltando", (personaje.x, personaje.y - 60)),
+                "ataque_especial": ("ataque_especial", (personaje.x, personaje.y)),
+                "normal": ("posicion_normal", (personaje.x, personaje.y)),
+            }.get(estado_personaje, ("posicion_normal", (personaje.x, personaje.y)))
+            sprite = personaje.sprites.get(sprite_key)
+            if sprite:
+                if estado_personaje == "ataque_especial" and personaje.nombre == "daniel" and ataque_especial_en_progreso and ataque_especial_personaje == personaje:
+                    personaje_rotacion_angulo = (personaje_rotacion_angulo + 45) % 360
+                    rotated, rotated_rect = rotar_sprite(sprite, personaje_rotacion_angulo)
+                    rotated_rect.topleft = pos
+                    screen.blit(rotated, rotated_rect)
+                else:
+                    personaje_rotacion_angulo = 0
+                    screen.blit(sprite, pos)
+
+            # Personaje 2
+            sprite_key2, pos2 = {
+                "agachado": ("agachado", (personaje2.x, personaje2.y)),
+                "primer_ataque": ("primer_ataque", (personaje2.x, personaje2.y)),
+                "segundo_ataque": ("segundo_ataque", (personaje2.x, personaje2.y)),
+                "defendiendose": ("defendiendose", (personaje2.x, personaje2.y)),
+                "defendiendose_agachado": ("defendiendose_agachado", (personaje2.x, personaje2.y + 5)),
+                "saltando": ("saltando", (personaje2.x, personaje2.y - 60)),
+                "ataque_especial": ("ataque_especial", (personaje2.x, personaje2.y)),
+                "normal": ("posicion_normal", (personaje2.x, personaje2.y)),
+            }.get(estado_personaje2, ("posicion_normal", (personaje2.x, personaje2.y)))
+            sprite2 = personaje2.sprites.get(sprite_key2)
+            if sprite2:
+                if estado_personaje2 == "ataque_especial" and personaje2.nombre == "daniel" and ataque_especial_en_progreso and ataque_especial_personaje == personaje2:
+                    personaje2_rotacion_angulo = (personaje2_rotacion_angulo + 45) % 360
+                    rotated2, rotated_rect2 = rotar_sprite(sprite2, personaje2_rotacion_angulo)
+                    rotated_rect2.topleft = pos2
+                    screen.blit(rotated2, rotated_rect2)
+                else:
+                    personaje2_rotacion_angulo = 0
+                    screen.blit(sprite2, pos2)
+        dibujar = dibujar
