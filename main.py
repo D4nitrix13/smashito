@@ -127,7 +127,8 @@ HEIGHT: int
 
 info: Any = pygame.display.Info()
 
-WIDTH, HEIGHT = info.current_w, info.current_h
+# Todo Editar Alto de la ventana
+WIDTH, HEIGHT = info.current_w, info.current_h + 12
 WINDOW_SIZE: Tuple[int, int] = (WIDTH, HEIGHT)
 
 screen: pygame.Surface = pygame.display.set_mode(size=WINDOW_SIZE)
