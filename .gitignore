@@ -1,0 +1,11 @@
+# Ignored
+.venv/
+assets/decorations/*
+**/*.zip
+
+# Not Ignored
+!assets/background/
+!assets/ground.png
+!assets/decorations/shop.png
+!assets/decorations/shop_anim.png
+!assets/music/
