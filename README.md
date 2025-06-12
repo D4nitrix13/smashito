@@ -8,6 +8,8 @@
 
 ## Cómo ejecutar el proyecto
 
+_Version Python `3.13.3`_
+
 Sigue estos pasos para clonar y correr el juego:
 
 ```bash
@@ -32,5 +34,5 @@ python3 main.py daniel jeremy
 
 ### Recurso
 
-* [https://www.fontspace.com/category/pixel,game](https://www.fontspace.com/category/pixel,game "https://www.fontspace.com/category/pixel,game")
-* [https://brullov.itch.io/oak-woods](https://brullov.itch.io/oak-woods "https://brullov.itch.io/oak-woods")
+- [https://www.fontspace.com/category/pixel,game](https://www.fontspace.com/category/pixel,game "https://www.fontspace.com/category/pixel,game")
+- [https://brullov.itch.io/oak-woods](https://brullov.itch.io/oak-woods "https://brullov.itch.io/oak-woods")
